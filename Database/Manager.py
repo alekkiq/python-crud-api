@@ -13,6 +13,21 @@ class DatabaseManager:
     def __init__(self, database: Database, logger):
         self.__logger = logger
         self.__db = database
+        self.__primary_key_cache = {}
+        self.__table_columns_cache = {}
+    
+    # ------------------------------
+    # Internal methods
+    # ------------------------------
+    def __check_cache(self, table: str, cache: dict) -> bool:
+        '''
+        Checks if the `table` is in the `cache`
+        
+        Args:
+            table (str): The table name
+            cache (dict): The cache dictionary
+        '''
+        return table in cache
     
     def _apply_clause(self, query: Query, clause: str, value: str, query_args: dict) -> Query:
         match clause:
@@ -24,6 +39,7 @@ class DatabaseManager:
                 return self._limit_clause(query, value)
             case 'offset':
                 return self._offset_clause(query, value, limit = query_args.get('limit', 0))
+            # ... other cases if needed
             case _:
                 return query
     
@@ -47,6 +63,76 @@ class DatabaseManager:
     def _offset_clause(self, query: Query, value: str, limit: int = 0) -> Query:
         return query.offset(value)
     
+    
+    # ------------------------------
+    # Public methods
+    # ------------------------------
+    def primary_key(self, table: str) -> str:
+        '''
+        Get the primary key for the table
+        
+        Args:
+            table (str): The table name
+        
+        Returns:
+            str: The primary key field
+        '''
+        # Check if the primary key is in cache
+        if self.__check_cache(table, self.__primary_key_cache):
+            return self.__primary_key_cache[table]
+        
+        query = f'''
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = "{table}" AND COLUMN_KEY = "PRI"
+        '''
+        try:
+            result = self.__db.query(query, cursor_settings={'dictionary': True})
+            if result:
+                primary_key = result['data'][0]['COLUMN_NAME']
+                self.__primary_key_cache[table] = primary_key
+                return primary_key
+            else:
+                raise ValueError(f'No primary key found for table {table}')
+        except Exception as e:
+            self.__logger.error(f'Error getting primary key for table {table}: {e}')
+            return None
+        
+    def get_valid_columns(self, table: str) -> list:
+        '''
+        Get the valid columns for the table
+        
+        Args:
+            table (str): The table name
+        
+        Returns:
+            list: The list of valid columns
+        '''      
+        # Check if the table columns are in cache  
+        if self.__check_cache(table, self.__table_columns_cache):
+            return self.__table_columns_cache[table]
+        
+        query = f'''
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = "{table}"
+        '''
+        try:
+            result = self.__db.query(query, cursor_settings={'dictionary': True})
+            if result:
+                table_columns = [row['COLUMN_NAME'] for row in result['data']]
+                self.__table_columns_cache[table] = table_columns
+                return table_columns
+            else:
+                raise ValueError(f'No columns found for table {table}')
+        except Exception as e:
+            self.__logger.error(f'Error getting columns for table {table}: {e}')
+            return []
+       
+       
+    # ------------------------------
+    # Database actions (public)
+    # ------------------------------
     def select(self, table_name: str, fields: list = ['*'], query_args: dict = None) -> dict:
         '''
         Database action: SELECT
@@ -77,8 +163,10 @@ class DatabaseManager:
         # Finalize the query and get the SQL
         sql = q.get_sql()
         
-        result = self.__db.query(sql, cursor_settings = {'dictionary': True})
+        result = self.__db.query(
+            query = sql, 
+            cursor_settings = {'dictionary': True},
+            query_arguments = query_args
+        )
         
         return result
-    
-    
