@@ -2,7 +2,11 @@ import mysql.connector
 from pypika import Query, Table, Field, Order
 
 # Status codes & messages
-from .status_codes import DATABASE_STATUS_CODES as STATUS_CODES, DATABASE_STATUS_MESSAGES as STATUS_MESSAGES
+from .status_codes import DATABASE_STATUS_MESSAGES as STATUS_MESSAGES
+
+# TODO
+# - Add support for other database engines
+# - This class works with MySQL/MariaDB only
 
 class Database:
     '''
@@ -35,13 +39,31 @@ class Database:
                 collation = 'utf8mb4_unicode_ci',
                 charset = 'utf8mb4'
             )
-            
-            self.__logger.info(f'Database connection opened at `{self.__config["host"]}:{self.__config["port"]}`')
+            self.__log(STATUS_MESSAGES['connection_success'](f'{self.__config['host']}:{self.__config['port']}')['message'], 'info')
             return connection
         except Exception as e:
-            self.__logger.error(f'Error establishing database connection: {e}')
+            self.__log(STATUS_MESSAGES['connection_fail'](f'Configs: {self.__config}', e)['message'], 'error')
             return None
         
+    def __log(self, message: str, level: str = 'info'):
+        '''
+        Logs a message
+        
+        Args:
+            message (str): The message to log
+            level (str): The log level
+        '''
+        match level:
+            case 'info':
+                self.__logger.info(message)
+            case 'warning':
+                self.__logger.warning(message)
+            case 'error':
+                self.__logger.error(message)
+            case _:
+                self.__logger.info(message)
+
+
     # ------------------------------
     # Public methods
     # ------------------------------
@@ -51,7 +73,8 @@ class Database:
         '''
         self.cursor.close()
         self.connection.close()
-        
+    
+    
     def query(self, query: str, query_arguments: dict = None, cursor_settings: dict = None) -> dict:
         '''
         Executes a query and returns the result
@@ -64,24 +87,41 @@ class Database:
         
         try:
             cursor = self.connection.cursor(dictionary = cursor_settings.get('dictionary', False))
-            
             cursor.execute(query)
             
-            self.__logger.info(f'Query executed successfully')
+            # Log the query execution
+            self.__log(STATUS_MESSAGES['query_success'](str(cursor.statement))['message'], 'info')
             
             data_found = cursor.fetchall()
-            
-            return {
-                'success': True,
+            result = {
+                'status': {
+                    'success': True,
+                    'type': 'info'
+                },
                 'affected_rows': cursor.rowcount,
-                'query': cursor.statement,
-                'arguments': query_arguments,
-                'result_group': len(data_found) > 0,
+                'result_group': cursor.with_rows,
+                'query': {
+                    'statement': cursor.statement,
+                    'arguments': query_arguments
+                },
                 'data': data_found
             }
         except Exception as e:
-            self.__logger.error(f'Error executing query: {e}')
-            return {
-                'success': False,
-                'error': str(e)
+            # Log the query error
+            self.__log(STATUS_MESSAGES['query_error'](e, str(cursor.statement))['message'], 'error')
+            
+            result = {
+                'status': {
+                    'success': False,
+                    'type': 'error'
+                },
+                'affected_rows': cursor.rowcount,
+                'result_group': cursor.with_rows,
+                'query': {
+                    'statement': cursor.statement,
+                    'arguments': query_arguments
+                },
+                'data': []
             }
+        finally:
+            return result 
