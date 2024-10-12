@@ -13,16 +13,11 @@ from config import app_config as APP_CONFIG
 # ------------------------------ #
 # Database constants             #
 # ------------------------------ #
-from Database.status_codes import DATABASE_STATUS_CODES, DATABASE_STATUS_MESSAGES
 from config import database_config as DATABASE_CONFIG
-from Database import Database, DatabaseManager
-
-
+    
 # ------------------------------ #
 # Logger constants               #
 # ------------------------------ #
-from Logger import Logger
-
 
 # ------------------------------ #
 # API constants                  #
