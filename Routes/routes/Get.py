@@ -1,13 +1,16 @@
 # Python deps & external libraries
 import flask
 from flask import jsonify, request, g
-from Database.Manager import DatabaseManager
 
 # The abstract class for the routes
 from Routes.Route import Route
 
+# Internal modules
+from Logger import Logger
+from Database.Manager import DatabaseManager
+
 # Constants
-from constants import Logger, VALID_GET_QUERY_ARGS, HIDDEN_TABLES
+from constants import VALID_GET_QUERY_ARGS, HIDDEN_TABLES
 
 class Get(Route):
     '''

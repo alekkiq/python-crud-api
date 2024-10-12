@@ -3,8 +3,12 @@ from abc import ABC
 import flask
 from flask import jsonify
 
+# Internal modules
+from Database.Manager import DatabaseManager
+from Logger import Logger
+
 # Constants
-from constants import DatabaseManager, Logger, HIDDEN_TABLES
+from constants import HIDDEN_TABLES
 
 class Route(ABC):
     '''
@@ -52,7 +56,7 @@ class Route(ABC):
                 query_args[arg] = request.args.get(arg)
         
         # Get valid columns for the table
-        valid_columns = self.db.get_valid_columns(table)
+        valid_columns = self.db.get_column_names(table, self.db.db_type)
         
         # View all other query (not in valid_args) 
         # as parameters as where clauses.

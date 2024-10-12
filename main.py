@@ -12,14 +12,13 @@ from dotenv import load_dotenv
 from constants import DATABASE_CONFIG, API_CONFIG, APP_CONFIG
 from constants import ALLOWED_ORIGINS, API_KEYS, API_SECRETS, API_CORE_URL_PREFIX
 
-# Classes
-from constants import Logger, Database, DatabaseManager
+# Modules
+from Logger.Logger import Logger
+from Database.Factory import DatabaseFactory
+from Database.Manager import DatabaseManager
 
 # Routes
-from Routes.routes import Get as GetRoute
-from Routes.routes import Post as PostRoute
-from Routes.routes import Put as PutRoute
-from Routes.routes import Delete as DeleteRoute
+from Routes.routes.Get import Get as GetRoute
 
 config = API_CONFIG()
 
@@ -27,7 +26,7 @@ config = API_CONFIG()
 logger = Logger().get_logger()
 
 # Initialize the Database, and the DatabaseManager
-database = Database(DATABASE_CONFIG(), logger)
+database = DatabaseFactory.create_database(DATABASE_CONFIG(), logger)
 db = DatabaseManager(database, logger)
 
 # Initialize the Flask app
