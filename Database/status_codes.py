@@ -85,8 +85,8 @@ DATABASE_STATUS_MESSAGES = {
         'status': DATABASE_STATUS_CODES['connection_fail'],
         'type': 'error'
     },
-    'connection_success': lambda config: {
-        'message': f'Successfully established a connection to the database: `{config}`',
+    'connection_success': lambda config, db_type: {
+        'message': f'Successfully established a connection to the `{db_type}` database: `{config}`',
         'status': DATABASE_STATUS_CODES['connection_success'],
         'type': 'info'
     },
