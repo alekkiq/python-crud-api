@@ -1,4 +1,5 @@
 from .Database import Database
+
 from pypika import Table, Field, Order, Criterion
 from pypika.dialects import MySQLQuery as Query
 
@@ -15,6 +16,9 @@ class DatabaseManager:
         self.__db = database
         self.__primary_key_cache = {}
         self.__table_columns_cache = {}
+        
+        # Database type
+        self.db_type = database.config.get('type', 'mysql')
     
     # ------------------------------
     # Internal methods
@@ -88,6 +92,7 @@ class DatabaseManager:
         '''
         try:
             result = self.__db.query(query, cursor_settings={'dictionary': True})
+            
             if result:
                 primary_key = result['data'][0]['COLUMN_NAME']
                 self.__primary_key_cache[table] = primary_key
@@ -98,7 +103,7 @@ class DatabaseManager:
             self.__logger.error(f'Error getting primary key for table {table}: {e}')
             return None
         
-    def get_valid_columns(self, table: str) -> list:
+    def get_column_names(self, table: str, db_type: str = 'mysql') -> list:
         '''
         Get the valid columns for the table
         
@@ -112,23 +117,29 @@ class DatabaseManager:
         if self.__check_cache(table, self.__table_columns_cache):
             return self.__table_columns_cache[table]
         
-        query = f'''
-        SELECT COLUMN_NAME
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_NAME = "{table}"
-        '''
+        cursor = self.__db.cursor
+
         try:
-            result = self.__db.query(query, cursor_settings={'dictionary': True})
-            if result:
-                table_columns = [row['COLUMN_NAME'] for row in result['data']]
-                self.__table_columns_cache[table] = table_columns
-                return table_columns
-            else:
-                raise ValueError(f'No columns found for table {table}')
+            
+            if db_type == 'sqlite':
+                query = f'PRAGMA table_info({table})'
+                result = self.__db.query(query)
+                columns = [row[1] for row in cursor.fetchall()]  # The second column in the result set contains the column names
+                self.__table_columns_cache[table] = columns
+                return columns
+            else: # mysql, postgre, mariadb
+                query = f'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = "{table}"'
+                result = self.__db.query(query, cursor_settings={'dictionary': True})
+                
+                if result:
+                    table_columns = [row['COLUMN_NAME'] for row in result['data']]
+                    self.__table_columns_cache[table] = table_columns
+                    return table_columns
+                else:
+                    raise ValueError(f'No columns found for table {table}')
         except Exception as e:
             self.__logger.error(f'Error getting columns for table {table}: {e}')
             return []
-       
        
     # ------------------------------
     # Database actions (public)

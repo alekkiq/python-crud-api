@@ -1,0 +1,82 @@
+import sqlite3
+
+from typing import override
+
+from ..Database import Database
+from ..status_codes import DATABASE_STATUS_MESSAGES
+
+class SQLiteDatabase(Database):
+    '''
+    Database type: MySQL (MariaDB)
+    '''
+    def __init__(self, config: dict, logger):
+        '''
+        Initialize the MySQL database object.
+        
+        Args:
+            config (dict): The database connection options
+            logger (Logger): The logger instance
+        '''
+        super().__init__(config, logger)
+    
+    @override
+    def _create_connection(self) -> sqlite3.Connection:
+        '''
+        Create a connection to the MySQL database.
+        
+        Returns:
+            sqlite3.Connection: The database connection object
+        '''
+        connection = None
+        
+        try:
+            connection = sqlite3.connect(
+                database = self.config['database'] + '.db', 
+                autocommit = self.config['autocommit'],
+                check_same_thread = False
+            )
+            self._log(DATABASE_STATUS_MESSAGES['connection_success'](self.config, 'SQLite')['message'], 'info')
+        except sqlite3.Error as e:
+            self._log(DATABASE_STATUS_MESSAGES['connection_fail'](self.config, e)['message'], 'error')
+        finally:
+            return connection
+        
+    @override
+    def query(self, query: str, cursor_settings: dict = None, query_arguments: dict = None) -> dict:
+        '''
+        Execute a query on the SQLite database.
+        
+        Args:
+            query (str): The query string
+            cursor_settings (dict): The cursor settings
+            query_arguments (dict): The query arguments
+        '''
+        if self.connection is None:
+            return DATABASE_STATUS_MESSAGES['connection_fail'](self.config, 'No connection established.')
+        
+        result = []
+        status = {}
+        
+        try:
+            self._log(f'Executing query: {query}', 'info')
+            self.cursor.execute('BEGIN')
+            self.cursor.execute(query)
+            result = self.cursor.fetchall()
+            status = {
+                'success': True if result else False,
+                'type': 'info' if result else 'warning'
+            }
+            self._log(DATABASE_STATUS_MESSAGES['query_success'](str(self.cursor.statement))['message'], 'info')
+        except sqlite3.Error as e:
+            self.connection.rollback()
+            status = {'success': False, 'type': 'error'}
+            self._log(DATABASE_STATUS_MESSAGES['query_fail'](str(self.cursor.statement), e)['message'], 'error')   
+        finally:
+            return self._build_query_result(
+                query = query,
+                query_arguments = query_arguments,
+                status = status,
+                affected_rows = len(result),
+                result_group = True if result else False,
+                data = result
+            )         

@@ -1,51 +1,68 @@
-import mysql.connector
-from pypika import Query, Table, Field, Order
+from abc import ABC, abstractmethod
 
-# Status codes & messages
-from .status_codes import DATABASE_STATUS_MESSAGES as STATUS_MESSAGES
-
-# TODO
-# - Add support for other database engines
-# - This class works with MySQL/MariaDB only
-
-class Database:
+class Database(ABC):
     '''
-    Database class is responsible for handling the common database actions.
+    Core abstract class for database instances. This class should be inherited by the database type classes (MySQL, Postgres, Mongo).
     
     Attributes:
         config (dict): The database connection options
         logger (Logger): The logger instance
-        connection (mysql.connector.connection.MySQLConnection): The database connection
-        cursor (mysql.connector.cursor.MySQLCursor): The database cursor
     '''
     def __init__(self, config: dict, logger):
-        self.__config = config
         self.__logger = logger
-        self.connection = self.__create_connection()
+        self.config = config
+        self.connection = self._create_connection()
         self.cursor = self.connection.cursor()
-    
-    # ------------------------------
-    # Private methods
-    # ------------------------------
-    def __create_connection(self) -> mysql.connector.connection.MySQLConnection:
-        try:
-            connection = mysql.connector.connect(
-                host = self.__config['host'],
-                port = self.__config['port'],
-                user = self.__config['user'],
-                password = self.__config['password'],
-                database = self.__config['database'],
-                autocommit = self.__config['autocommit'],
-                collation = 'utf8mb4_unicode_ci',
-                charset = 'utf8mb4'
-            )
-            self.__log(STATUS_MESSAGES['connection_success'](f'{self.__config['host']}:{self.__config['port']}')['message'], 'info')
-            return connection
-        except Exception as e:
-            self.__log(STATUS_MESSAGES['connection_fail'](f'Configs: {self.__config}', e)['message'], 'error')
-            return None
         
-    def __log(self, message: str, level: str = 'info'):
+    @abstractmethod
+    def _create_connection(self) -> any:
+        '''
+        Create a connection to the database. This method should be implemented by the db-type classes accordingly.
+        '''
+        pass
+        
+    @abstractmethod
+    def query(self, query: str, cursor_settings: dict = None, query_arguments: dict = None) -> dict:
+        '''
+        The method to execute a query on the database.
+        
+        Args:
+            query (str): The query string
+            cursor_settings (dict): The cursor settings
+            query_arguments (dict): The query arguments
+        '''
+        pass
+    
+    def _build_query_result(self, query: str, query_arguments: dict, status: dict = {'success': True, 'type': 'info'}, affected_rows: int = 0, result_group: bool = False, data: list = []) -> dict:
+        '''
+        Constructs the query result dictionary.
+        
+        Args:
+            query (str): The query string
+            query_arguments (dict): The query arguments
+            status (dict): The query status
+            affected_rows (int): The number of affected rows
+            result_group (bool): If there are results or not
+            data (list): The query result data
+            
+        Returns:
+            dict: The query result dictionary. This dictionary ultimately appears in the API responses.
+        '''
+        return {
+            'status': {
+                'success': status.get('success', True),
+                'type': status.get('type', 'info')
+            },
+            'affected_rows': affected_rows,
+            'result_group': result_group,
+            'query': {
+                'statement': query,
+                'arguments': query_arguments
+            },
+            'data': data
+        } 
+        
+    def _log(self, message: str, level: str = 'info'):
         '''
         Logs a message
         
@@ -62,66 +79,3 @@ class Database:
                 self.__logger.error(message)
             case _:
                 self.__logger.info(message)
-
-
-    # ------------------------------
-    # Public methods
-    # ------------------------------
-    def close(self):
-        '''
-        Closes the database connection
-        '''
-        self.cursor.close()
-        self.connection.close()
-    
-    
-    def query(self, query: str, query_arguments: dict = None, cursor_settings: dict = None) -> dict:
-        '''
-        Executes a query and returns the result
-        
-        Args:
-            query (str): The ready SQL query to execute
-            cursor_settings (dict): The cursor settings
-        '''
-        self.__logger.info(f'Executing query: `{query}`')
-        
-        try:
-            cursor = self.connection.cursor(dictionary = cursor_settings.get('dictionary', False))
-            cursor.execute(query)
-            
-            # Log the query execution
-            self.__log(STATUS_MESSAGES['query_success'](str(cursor.statement))['message'], 'info')
-            
-            data_found = cursor.fetchall()
-            result = {
-                'status': {
-                    'success': True,
-                    'type': 'info'
-                },
-                'affected_rows': cursor.rowcount,
-                'result_group': cursor.with_rows,
-                'query': {
-                    'statement': cursor.statement,
-                    'arguments': query_arguments
-                },
-                'data': data_found
-            }
-        except Exception as e:
-            # Log the query error
-            self.__log(STATUS_MESSAGES['query_error'](e, str(cursor.statement))['message'], 'error')
-            
-            result = {
-                'status': {
-                    'success': False,
-                    'type': 'error'
-                },
-                'affected_rows': cursor.rowcount,
-                'result_group': cursor.with_rows,
-                'query': {
-                    'statement': cursor.statement,
-                    'arguments': query_arguments
-                },
-                'data': []
-            }
-        finally:
-            return result 

@@ -11,6 +11,7 @@ def database_config() -> dict:
         dict: The database connection options
     '''
     return {
+        'type': os.getenv('DB_CONNECTION', 'mysql'),
         'user': os.getenv('DB_USER'),
         'password': os.getenv('DB_PASSWORD'),
         'host': os.getenv('DB_HOST'),
