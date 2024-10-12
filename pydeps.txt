@@ -1,4 +1,5 @@
 mysql-connector-python
 flask
-dotenv
+python-dotenv
 pypika
+psycopg2
