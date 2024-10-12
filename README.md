@@ -45,7 +45,7 @@ A Python-based CRUD (Create, Read, Update, Delete) API built with Flask and PyPi
 ## Configuration
 The application uses environment variables for configuration. The `.env` file should contain the following variables:
 
-#### **NOTE**: Add your own values with the same format you see in the example!
+### **NOTE**: Add your own values with the same format you see in the example!
 
 ```properties
 # App settings
@@ -86,8 +86,8 @@ DB_AUTO_COMMIT="true"
 ## Authentication
 Requests to the API must include the following headers:
 
-- `X-API-KEY`: Your valid API key
-- `X-API-SECRET`: Your valid secret for the corresponding key
+- `X-API-KEY`: A valid API key
+- `X-API-SECRET`: A valid secret for the corresponding API key
 
 ## CORS Configuration
 CORS is configured to allow requests from specified origins. Update the `API_ALLOWED_ORIGINS` variable in the `.env` file to include the allowed origins, like so:
