@@ -58,7 +58,7 @@ class Get(Route):
             primary_key = self.db.primary_key(table)
             if primary_key is None:
                 return jsonify({'error': 'Primary key not found'}), 400
-            query_args['where'] = f"{primary_key} = {pk}"
+            query_args['where'] = f'{primary_key} = {pk}'
         
         # Handle query exceptions
         rules = [

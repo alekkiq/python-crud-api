@@ -35,13 +35,7 @@ app = Flask(APP_CONFIG().get('name', __name__))
 api_url = config.get('url')
 
 # Enable CORS
-CORS(app, resources={f"{API_CORE_URL_PREFIX}/*": {"origins": ALLOWED_ORIGINS}}, supports_credentials=True)
-
-# Debugging statements
-print(f"API_KEYS: {API_KEYS}")
-print(f"API_SECRETS: {API_SECRETS}")
-print(f"ALLOWED_ORIGINS: {ALLOWED_ORIGINS}")
-
+CORS(app, resources={f'{API_CORE_URL_PREFIX}/*': {'origins': ALLOWED_ORIGINS}}, supports_credentials=True)
 
 # Avoid favicon.ico requests
 @app.route('/favicon.ico')
@@ -68,12 +62,26 @@ def check_allowed_origin():
     try:
         origin = request.environ.get('HTTP_ORIGIN') or request.environ.get('HTTP_REFERER') or request.environ.get('HTTP_HOST')
         if not origin.startswith('http://') and not origin.startswith('https://'):
-            origin = f"http://{origin}"
+            origin = f'http://{origin}'
         g.table_visibility = 'all' if origin in ALLOWED_ORIGINS else 'hidden'
     except Exception as e:
         logger.error(f'Error checking hidden table permission: {e}')
         g.table_visibility = 'hidden'
         
+# ------------------------------
+# Error handlers
+# ------------------------------
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Not found', 'status': 404}), 404
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({'error': 'Method not allowed', 'status': 405}), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'error': 'Internal server error', 'status': 500}), 500
 
 # ------------------------------
 # GET routes
