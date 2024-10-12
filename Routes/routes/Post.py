@@ -1,4 +1,4 @@
-from Routes import Route
+from Routes.Route import Route
 
 class Post(Route):
     pass
