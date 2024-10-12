@@ -60,7 +60,7 @@ class Route(ABC):
         for key, value in request.args.items():
             if key not in valid_args:
                 if key in valid_columns:
-                    where_clauses.append(f"{key}='{value}'")
+                    where_clauses.append(f'{key}="{value}"')
                 else:
                     self.logger.warning(f'Invalid where clause key: `{key}`')
         
