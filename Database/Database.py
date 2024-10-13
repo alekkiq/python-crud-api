@@ -22,6 +22,10 @@ class Database(ABC):
         self.connection = self._create_connection()
         self.cursor = self.connection.cursor()
         
+        # Define valid SQL actions
+        self.valid_sql_actions = ('select', 'insert', 'update', 'delete')
+        self.committable_sql_actions = ('insert', 'update', 'delete')
+        
     @abstractmethod
     def _create_connection(self) -> any:
         '''
@@ -42,6 +46,25 @@ class Database(ABC):
             is_meta_query (bool): If the query is a meta query or not
         '''
         pass
+    
+    def _commit_changes(self, query: str) -> dict:
+        '''
+        Checks if the query is a committable action and commits the changes to the database.
+        
+        Args:
+            query (str): The query string
+        
+        Returns:
+            dict: The query result dictionary
+        '''
+        try:
+            query_action = query.strip().lower().split(' ')[0]
+            if query_action not in self.committable_sql_actions:
+                return
+            self.connection.commit()
+            self._log(f'Changes committed to the database: {query}', 'info')
+        except Exception as e:
+            self._log(f'Failed to commit changes to the database: {query}. Error: {str(e)}', 'error')
     
     def _build_query_result(self, query: str, table_name: str, query_arguments: dict, is_meta_query: bool = False, status: dict = {'success': True, 'type': 'info'}, affected_rows: int = 0, result_group: bool = False, data: list = []) -> dict:
         '''
@@ -91,18 +114,18 @@ class Database(ABC):
             page = (offset // limit) + 1
             total_pages = (total_records + per_page - 1) // per_page
 
-        base_url = f"{API_CORE_URL_PREFIX}/{table_name}"
+        base_url = f'{API_CORE_URL_PREFIX}/{table_name}'
         self_url = base_url
         next_url = None
         prev_url = None
 
         # add query parameters to links if limit is not -1
         if limit != -1:
-            self_url += f"?offset={offset}&limit={limit}"
+            self_url += f'?offset={offset}&limit={limit}'
             if page < total_pages:
-                next_url = f"{base_url}?offset={offset + limit}&limit={limit}"
+                next_url = f'{base_url}?offset={offset + limit}&limit={limit}'
             if page > 1:
-                prev_url = f"{base_url}?offset={max(0, offset - limit)}&limit={limit}"
+                prev_url = f'{base_url}?offset={max(0, offset - limit)}&limit={limit}'
 
         # construct the final dictionary
         return {
