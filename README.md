@@ -27,12 +27,13 @@ A Python-based CRUD (Create, Read, Update, Delete) API built with Flask and PyPi
 2. Create a virtual environment and activate it (optional, but highly recommended):
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    source venv/bin/activate  # On Linux/Mac
+    venv/Scripts/activate   # On windows
     ```
 
 3. Install the required Python packages:
     ```bash
-    pip install -r pydeps.txt
+    pip install -r requirements.txt
     ```
 
 4. Create a `.env` file based on the provided `.env.example`:
