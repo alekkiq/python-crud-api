@@ -24,11 +24,10 @@ from constants import API_KEYS, API_SECRETS, ALLOWED_ORIGINS, HIDDEN_TABLES
 from constants import APP_LOGGER, DB_LOGGER, API_LOGGER, WAITRESS_LOGGER
 
 # Modules
-from Database.DatabaseFactory import DatabaseFactory
-from Database.DatabaseManager import DatabaseManager
+from Database import DatabaseFactory, DatabaseManager
 
 # Routes
-from Routes.routes.Get import Get as GetRoute
+from Routes.routes import Get as GetRoute, Post as PostRoute, Put as PutRoute, Delete as DeleteRoute
 
 # Create the Database instance and the DatabaseManager
 database = DatabaseFactory.create_database(DATABASE_CONFIG, DB_LOGGER)

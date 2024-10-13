@@ -3,13 +3,11 @@ from pypika import Table, Field, Order, Criterion
 from pypika.dialects import MySQLQuery as Query
 
 # DB Helper classes
-from .Helpers.CacheManager import CacheManager
-from .Helpers.QueryBuilder import QueryBuilder
-from .Helpers.MetadataRetriever import MetadataRetriever
+from .Helpers import MetadataRetriever, QueryBuilder, CacheManager
 
 # Imports for proper typing
-from .Database import Database
-from Logger.Logger import Logger
+from . import Database
+from Logger import Logger
 
 # Constants
 from constants import VALID_QUERY_ARGS

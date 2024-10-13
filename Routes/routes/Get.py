@@ -3,11 +3,11 @@ import flask
 from flask import jsonify, request, g
 
 # The abstract class for the routes
-from Routes.Route import Route
+from .. import Route
 
 # Imports for proper typing
-from Logger.Logger import Logger
-from Database.DatabaseManager import DatabaseManager
+from Logger import Logger
+from Database import DatabaseManager
 
 # Constants
 from constants import VALID_QUERY_ARGS, HIDDEN_TABLES

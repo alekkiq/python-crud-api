@@ -4,8 +4,8 @@ import flask
 from flask import jsonify
 
 # Imports for proper typing
-from Database.DatabaseManager import DatabaseManager
-from Logger.Logger import Logger
+from Database import DatabaseManager
+from Logger import Logger
 
 # Constants
 from constants import HIDDEN_TABLES

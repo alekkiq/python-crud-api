@@ -1,4 +1,4 @@
-from Logger.Logger import Logger
+from . import Logger
 
 # Getter function for the logger instance
 def get_logger(logger_name='api_logger', config_path='Logger/logging.conf', log_dir='logs'):

@@ -1,11 +1,6 @@
-# Import all the engines
-from .engines.MySQL import MySQLDatabase
-from .engines.SQLite import SQLiteDatabase
-from .engines.PostgreSQL import PostgreSQLDatabase
-
 # Imports for proper typing
-from .Database import Database
-from Logger.Logger import Logger
+from . import Database
+from Logger import Logger
 
 # Constants
 from constants import ALLOWED_DATABASES
@@ -26,10 +21,13 @@ class DatabaseFactory:
         else: 
             match database_type:
                 case 'mysql':
+                    from .engines import MySQLDatabase
                     return MySQLDatabase(config, logger)
                 case 'postgresql':
+                    from .engines import PostgreSQLDatabase
                     return PostgreSQLDatabase(config, logger)
                 case 'sqlite':
+                    from .engines import SQLiteDatabase
                     return SQLiteDatabase(config, logger)
                 case _:
                     logger.error(f'Database type {database_type} is not supported.')
