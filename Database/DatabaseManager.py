@@ -128,3 +128,37 @@ class DatabaseManager:
         )
         
         return result
+    
+    # ...
+    
+    def delete(self, table_name: str, query_args: dict) -> dict:
+        '''
+        Database action: DELETE
+        
+        Args:
+            table_name (str): The name of the table to query
+            query_args (dict): The query arguments
+        
+        Returns:
+            dict: The result of the DELETE query
+        '''
+        table = Table(table_name)
+        query = Query.from_(table).delete() # DELETE FROM table
+        
+        # Create the query clauses (only WHERE in this case)
+        for key, value in query_args.items():
+            query = QueryBuilder.apply_clause(query, key, value, query_args)
+        
+        # Get the sql string of the constructed query
+        sql = query.get_sql()
+        
+        print(sql)
+        
+        result = self.__db.query(
+            query = sql, 
+            table_name = table_name,
+            cursor_settings = {'dictionary': True},
+            query_arguments = query_args
+        )
+        
+        return result
