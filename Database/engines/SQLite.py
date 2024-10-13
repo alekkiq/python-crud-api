@@ -59,16 +59,15 @@ class SQLiteDatabase(Database):
             return DATABASE_STATUS_MESSAGES['connection_fail'](self.config, 'No connection established.')
         
         result = []
-        status = {}
+        status = {
+            'success': True,
+            'type': 'info'
+        }
         
         try:
             self._log(f'Executing query: {query}', 'info')
             self.cursor.execute(query)
             result = self.cursor.fetchall()
-            status = {
-                'success': True if result else False,
-                'type': 'info' if result else 'warning'
-            }
             self._log(DATABASE_STATUS_MESSAGES['query_success'](str(self.cursor.statement))['message'], 'info')
         except sqlite3.Error as e:
             self.connection.rollback()

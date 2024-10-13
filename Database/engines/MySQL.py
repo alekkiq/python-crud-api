@@ -62,16 +62,19 @@ class MySQLDatabase(Database):
             return DATABASE_STATUS_MESSAGES['connection_fail'](self.__config, 'No connection established.')
         
         result = []
-        status = {}
+        status = {
+            'success': True,
+            'type': 'info'
+        }
         
         try:
             self.cursor = self.connection.cursor(**cursor_settings)
             self.cursor.execute(query)
             result = self.cursor.fetchall()
-            status = {
-                'success': True if result else False,
-                'type': 'info' if result else 'warning'
-            }
+            
+            # Commit changes if necessary
+            self._commit_changes(query)
+            
             self._log(DATABASE_STATUS_MESSAGES['query_success'](query)['message'], 'info')
         except mysql.connector.Error as e:
             self.connection.rollback()

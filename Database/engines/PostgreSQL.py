@@ -68,17 +68,16 @@ class PostgreSQLDatabase(Database):
             return DATABASE_STATUS_MESSAGES['connection_fail'](self.__config, 'No connection established.')
         
         result = []
-        status = {}
+        status = {
+            'success': True,
+            'type': 'info'
+        }
         
         try:
             cursor_factory = RealDictCursor if cursor_settings.get('dictionary', False) else None
             self.cursor = self.connection.cursor(cursor_factory = cursor_factory)
             self.cursor.execute(query)
             result = self.cursor.fetchall()
-            status = {
-                'success': True if result else False,
-                'type': 'info' if result else 'warning'
-            }
             self._log(DATABASE_STATUS_MESSAGES['query_success'](query)['message'], 'info')
         except psycopg2.OperationalError as e:
             self.connection.rollback()
