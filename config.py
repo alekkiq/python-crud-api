@@ -1,65 +1,39 @@
 from dotenv import load_dotenv
 import os
+from utils.parse_utils import parse_secrets
+from constants import LOGGER
 
-load_dotenv()
+load_dotenv('.env')
 
-def database_config() -> dict:
-    '''
-    Gets the database configuration from the environment variables
-    
-    Returns:
-        dict: The database connection options
-    '''
-    return {
-        'type': os.getenv('DB_CONNECTION', 'mysql'),
-        'user': os.getenv('DB_USER'),
-        'password': os.getenv('DB_PASSWORD'),
-        'host': os.getenv('DB_HOST'),
-        'port': os.getenv('DB_PORT'),
-        'database': os.getenv('DB_DATABASE'),
-        'autocommit': os.getenv('DB_AUTOCOMMIT', False),
-    }
-    
-def api_config() -> dict:
-    '''
-    Gets the API configuration from the environment variables
-    
-    Returns:
-        dict: The API configuration keys
-    '''
-    API_URL = os.getenv('API_URL')
-    
-    return {
-        'url': API_URL,
-        'id': os.getenv('API_CLIENT_ID'),
-        'secret': os.getenv('API_CLIENT_SECRET'),
-        'keys': os.getenv('API_KEYS', '').split(','),
-        'secrets': parse_secrets(os.getenv('API_SECRETS', '')),
-        'allowed_origins': os.getenv('API_ALLOWED_ORIGINS', [API_URL]).split(','),
-        'hidden_tables': os.getenv('API_HIDDEN_TABLES', []).split(',')
-    }
-    
-def app_config() -> dict:
-    '''
-    Gets the application configuration from the environment variables
-    
-    Returns:
-        dict: The application keys
-    '''
-    return {
-        'name': os.getenv('APP_NAME'),
-        'env': os.getenv('APP_ENV', 'development'),
-        'debug': os.getenv('APP_DEBUG', True),
-        'version': os.getenv('APP_VERSION', '1.0.0')
-    }
-    
-def parse_secrets(secrets_str):
-    secrets = {}
-    for item in secrets_str.split(','):
-        parts = item.split(':')
-        if len(parts) == 2:
-            key, secret = parts
-            secrets[key] = secret
-        else:
-            print(f'Invalid secret format: {item}')  # Use logger in production
-    return secrets
+# APP config
+APP_CONFIG = {
+    'name': os.getenv('APP_NAME'),
+    'env': os.getenv('APP_ENV', 'development'),
+    'debug': os.getenv('APP_DEBUG', True),
+    'version': os.getenv('APP_VERSION', '1.0.0')
+}
+
+# Database config
+DATABASE_CONFIG = {
+    'type': os.getenv('DB_CONNECTION', 'mysql'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'host': os.getenv('DB_HOST'),
+    'port': os.getenv('DB_PORT'),
+    'database': os.getenv('DB_DATABASE'),
+    'autocommit': os.getenv('DB_AUTOCOMMIT', False),
+    'charset': os.getenv('DB_CHARSET', 'utf8mb4'),
+    'collation': os.getenv('DB_COLLATION', 'utf8mb4_unicode_ci')
+}
+
+# API config
+API_URL = os.getenv('API_URL')
+API_CONFIG = {
+    'url': API_URL,
+    'id': os.getenv('API_CLIENT_ID'),
+    'secret': os.getenv('API_CLIENT_SECRET'),
+    'keys': os.getenv('API_KEYS', '').split(','),
+    'secrets': parse_secrets(os.getenv('API_SECRETS', ''), LOGGER),
+    'allowed_origins': os.getenv('API_ALLOWED_ORIGINS', [API_URL]).split(','),
+    'hidden_tables': os.getenv('API_HIDDEN_TABLES', []).split(',')
+}
