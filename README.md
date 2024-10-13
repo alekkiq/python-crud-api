@@ -14,8 +14,8 @@ A Python-based CRUD (Create, Read, Update, Delete) API built with Flask and PyPi
 - Easy configuration
 
 ## Requirements
-- Python 3.x (preferrably 3.12 <= x)
-- MySQL database
+- Python 3.12.x<= (built with 3.12.5)
+- SQL database in MySQL(MariaDB), PostgreSQL or SQLite
 - `pip` for Python package management
 
 ## Installation
