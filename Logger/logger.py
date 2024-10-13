@@ -21,5 +21,6 @@ class Logger:
         logging.config.fileConfig(self.config_path)
 
     def get_logger(self):
-        logging.info(f'Logger initialized')
-        return logging.getLogger(self.logger_name)
+        logger = logging.getLogger(self.logger_name)
+        logger.info(f'{self.logger_name} initialized.')
+        return logger

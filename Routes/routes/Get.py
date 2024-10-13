@@ -6,7 +6,7 @@ from flask import jsonify, request, g
 from Routes.Route import Route
 
 # Internal modules
-from Logger import Logger
+from Logger.Logger import Logger
 from Database.Manager import DatabaseManager
 
 # Constants
@@ -18,12 +18,13 @@ class Get(Route):
     
     Attributes:
         db (DatabaseManager): The database manager
-        logger (Logger): The logger instance
+        db_logger (Logger): The database logger instance
+        api_logger (Logger): The API logger instance
         path (str): The route path
         method (str): The HTTP method
     '''
-    def __init__(self, db: DatabaseManager, path: str, logger: Logger):
-        super().__init__(db, logger, path, 'GET')
+    def __init__(self, db: DatabaseManager, path: str, db_logger: Logger, api_logger: Logger):
+        super().__init__(db, db_logger, api_logger, path, 'GET')
         
     def _handle_query_exceptions(self, query_args: dict, rules: list):
         '''
