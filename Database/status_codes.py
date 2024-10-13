@@ -1,18 +1,18 @@
 DATABASE_STATUS_CODES = {
     'software_error': 0,
-    'not_found': 1,
-    'insert_success': 2,
-    'insert_fail': 3,
-    'already_used': 4,
-    'deletion_success': 5,
-    'deletion_fail': 6,
-    'update_success': 7,
-    'update_fail': 8,
-    'key_mismatch': 9,
-    'database_exists': 10,
-    'database_not_exists': 11,
-    'connection_fail': 12,
-    'connection_success': 13
+    'connection_fail': 1,
+    'connection_success': 2,
+    'database_exists': 3,
+    'database_not_exists': 4,
+    'not_found': 5,
+    'insert_success': 6,
+    'insert_fail': 7,
+    'already_used': 8,
+    'deletion_success': 9,
+    'deletion_fail': 10,
+    'update_success': 11,
+    'update_fail': 12,
+    'key_mismatch': 13
 }
 
 DATABASE_STATUS_MESSAGES = {
@@ -22,82 +22,69 @@ DATABASE_STATUS_MESSAGES = {
         'error': error,
         'type': 'error'
     },
-    'query_error': lambda error, query: {
-        'message': f'An error occurred while executing the query `{query}`:\n{error}',
-        'status': DATABASE_STATUS_CODES['software_error'],
-        'error': error,
-        'type': 'error'
-    },
-    'query_success': lambda query: {
-        'message': f'Query `{query}` executed successfully.',
-        'status': DATABASE_STATUS_CODES['software_error'],
-        'type': 'info'
-    },
-    'not_found': lambda id, table: {
-        'message': f'Record with the id `{id}` was not found in `{table}`.',
-        'status': DATABASE_STATUS_CODES['not_found'],
-        'type': 'error'
-    },
-    'insert_success': lambda id, table: {
-        'message': f'Successfully inserted record with id `{id}` to `{table}`.',
-        'status': DATABASE_STATUS_CODES['insert_success'],
-        'type': 'info'
-    },
-    'insert_fail': lambda id, table: {
-        'message': f'Record not added. Id `{id}` is empty or invalid at `{table}`.',
-        'status': DATABASE_STATUS_CODES['insert_fail'],
-        'type': 'fail'
-    },
-    'already_used': lambda field, value, table: {
-        'message': f'The {field} `{value}` is already used in `{table}`.',
-        'status': DATABASE_STATUS_CODES['already_used'],
-        'type': 'error',
-        'field': field,
-        'value': value
-    },
-    'deletion_success': lambda id, table: {
-        'message': f'Successfully deleted record with id `{id}` from `{table}`.',
-        'status': DATABASE_STATUS_CODES['deletion_success'],
-        'type': 'info'
-    },
-    'deletion_fail': lambda id, table: {
-        'message': f'Failed to delete record with id `{id}` from `{table}`.',
-        'status': DATABASE_STATUS_CODES['deletion_fail'],
-        'type': 'fail'
-    },
-    'update_success': lambda id, table: {
-        'message': f'Successfully updated record with id `{id}` in `{table}`.',
-        'status': DATABASE_STATUS_CODES['update_success'],
-        'type': 'info'
-    },
-    'update_fail': lambda id, table: {
-        'message': f'Failed to update record with id `{id}` in `{table}`.',
-        'status': DATABASE_STATUS_CODES['update_fail'],
-        'type': 'fail'
-    },
-    'key_mismatch': lambda expected, received: {
-        'message': f'Key mismatch error. Expected `{expected}`, but received `{received}`.',
-        'status': DATABASE_STATUS_CODES['key_mismatch'],
-        'type': 'error'
-    },
     'connection_fail': lambda config, error: {
-        'message': f'Failed to establish a connection to the database: `{config}`:\n{error}',
+        'message': f'Failed to establish a connection to the database. Configurations: `{config}`:\n{error}',
         'status': DATABASE_STATUS_CODES['connection_fail'],
         'type': 'error'
     },
     'connection_success': lambda config, db_type: {
-        'message': f'Successfully established a connection to the `{db_type}` database: `{config}`',
+        'message': f'Successfully established a connection to the `{db_type}` database at `{config.get('host')}:{config.get('port')}`.',
         'status': DATABASE_STATUS_CODES['connection_success'],
         'type': 'info'
     },
     'database_exists': lambda database: {
-        'message': 'Database already exists.',
+        'message': f'The database `{database}` already exists.',
         'status': DATABASE_STATUS_CODES['database_exists'],
         'type': 'info'
     },
     'database_not_exists': lambda database: {
-        'message': 'Database does not exist.',
+        'message': f'The database `{database}` does not exist.',
         'status': DATABASE_STATUS_CODES['database_not_exists'],
+        'type': 'error'
+    },
+    'not_found': lambda record: {
+        'message': f'The requested record `{record}` was not found.',
+        'status': DATABASE_STATUS_CODES['not_found'],
+        'type': 'error'
+    },
+    'insert_success': lambda record: {
+        'message': f'The record `{record}` was successfully inserted.',
+        'status': DATABASE_STATUS_CODES['insert_success'],
+        'type': 'success'
+    },
+    'insert_fail': lambda record, error: {
+        'message': f'Failed to insert the record `{record}`. Error: {error}',
+        'status': DATABASE_STATUS_CODES['insert_fail'],
+        'type': 'error'
+    },
+    'already_used': lambda record: {
+        'message': f'The record `{record}` is already in use.',
+        'status': DATABASE_STATUS_CODES['already_used'],
+        'type': 'error'
+    },
+    'deletion_success': lambda record: {
+        'message': f'The record `{record}` was successfully deleted.',
+        'status': DATABASE_STATUS_CODES['deletion_success'],
+        'type': 'success'
+    },
+    'deletion_fail': lambda record, error: {
+        'message': f'Failed to delete the record `{record}`. Error: {error}',
+        'status': DATABASE_STATUS_CODES['deletion_fail'],
+        'type': 'error'
+    },
+    'update_success': lambda record: {
+        'message': f'The record `{record}` was successfully updated.',
+        'status': DATABASE_STATUS_CODES['update_success'],
+        'type': 'success'
+    },
+    'update_fail': lambda record, error: {
+        'message': f'Failed to update the record `{record}`. Error: {error}',
+        'status': DATABASE_STATUS_CODES['update_fail'],
+        'type': 'error'
+    },
+    'key_mismatch': lambda key: {
+        'message': f'The key `{key}` does not match a database record.',
+        'status': DATABASE_STATUS_CODES['key_mismatch'],
         'type': 'error'
     }
 }
