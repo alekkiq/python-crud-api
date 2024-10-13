@@ -3,11 +3,16 @@ from .engines.MySQL import MySQLDatabase
 from .engines.SQLite import SQLiteDatabase
 from .engines.PostgreSQL import PostgreSQLDatabase
 
+# Imports for proper typing
+from .Database import Database
+from Logger.Logger import Logger
+
+# Constants
 from constants import ALLOWED_DATABASES
 
 class DatabaseFactory:
     @staticmethod
-    def create_database(config: dict, logger):
+    def create_database(config: dict, logger: Logger) -> Database:
         '''
         Creates a new database object based on the configuration.
         
@@ -27,4 +32,5 @@ class DatabaseFactory:
                 case 'sqlite':
                     return SQLiteDatabase(config, logger)
                 case _:
+                    logger.error(f'Database type {database_type} is not supported.')
                     raise ValueError(f'Database type {database_type} is not supported.')
