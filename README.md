@@ -1,9 +1,10 @@
 # Python CRUD API
 
 ## Description
-A Python-based CRUD (Create, Read, Update, Delete) API built with Flask and PyPika. This API provides endpoints to interact with a MySQL database, supporting various operations on different tables. The project includes features like API key authentication, CORS support, and environment-based configuration.
+A Python-based CRUD (Create, Read, Update, Delete) API built with Flask and PyPika. This API provides endpoints to interact with an SQL database, supporting various operations on different tables. The project includes features like API key authentication, CORS support, and environment-based configuration.
 
 ## Features
+- Support for MySQL(MariaDB), PostgreSQL and SQLite
 - CRUD operations for database tables
 - API key and secret authentication
 - CORS support with configurable allowed origins
@@ -65,13 +66,16 @@ API_HIDDEN_TABLES="your,protected,tables"
 API_ALLOWED_ORIGINS="your,allowed,origins"
 
 # Database settings
-DB_CONNECTION="mysql"
-DB_DATABASE="your_db_name"
+# Adjust these values to match your database type's settings
+DB_CONNECTION="db_type" # mysql | postgresql | sqlite
+DB_DATABASE="your_db_name" # If you are using sqlite, this should be the path to your database file ending with .db
 DB_HOST="your_db_host"
 DB_PORT="your_db_port"
 DB_USER="your_db_user"
 DB_PASSWORD="your_db_password"
 DB_AUTO_COMMIT="true"
+DB_COLLATION="utf8mb4_unicode_ci"
+DB_CHARSET="utf8"
 ```
 
 ## Running the API
