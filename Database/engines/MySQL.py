@@ -27,8 +27,6 @@ class MySQLDatabase(Database):
         Returns:
             mysql.connector.connection.MySQLConnection: The database connection object
         '''
-        connection = None
-        
         try:
             connection = mysql.connector.connect(
                 host = self.config['host'],
@@ -43,6 +41,7 @@ class MySQLDatabase(Database):
             self._log(DATABASE_STATUS_MESSAGES['connection_success'](self.config, 'MySQL')['message'], 'info')
         except mysql.connector.Error as e:
             self._log(DATABASE_STATUS_MESSAGES['connection_fail'](self.config, e)['message'], 'error')
+            connection = None
         finally:
             return connection
         
