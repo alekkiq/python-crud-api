@@ -1,5 +1,5 @@
 # Imports for proper typing
-from ..Database import Database
+from .. import Database
 
 class MetadataRetriever:
     '''

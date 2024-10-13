@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 
 # Imports for proper typing
-from Logger.Logger import Logger
+from Logger import Logger
 
 # Constants
 from constants import API_CORE_URL_PREFIX

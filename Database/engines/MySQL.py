@@ -3,9 +3,9 @@ import mysql.connector
 
 # Imports for proper typing
 from typing import override
-from Logger.Logger import Logger
+from Logger import Logger
 
-from ..Database import Database
+from .. import Database
 from ..status_codes import DATABASE_STATUS_MESSAGES
 
 class MySQLDatabase(Database):
