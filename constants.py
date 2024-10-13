@@ -13,6 +13,11 @@ from logger_setup import get_logger as get_logger
 LOGGER = get_logger()
 
 # ------------------------------ #
+# Database constants             #
+# ------------------------------ #
+ALLOWED_DATABASES = ('mysql', 'postgresql', 'mongodb', 'sqlite')
+
+# ------------------------------ #
 # API constants                  #
 # ------------------------------ #
 def initialize_api_constants(config: dict):
