@@ -3,6 +3,8 @@ from .Database import Database
 from pypika import Table, Field, Order, Criterion
 from pypika.dialects import MySQLQuery as Query
 
+from constants import VALID_QUERY_ARGS
+
 class DatabaseManager:
     '''
     DatabaseManager class is responsible for handling the database actions.
@@ -18,7 +20,7 @@ class DatabaseManager:
         self.__table_columns_cache = {}
         
         # Database type
-        self.db_type = database.config.get('type', 'mysql')
+        self.db_type = database.config.get('type')
     
     # ------------------------------
     # Internal methods
@@ -32,6 +34,43 @@ class DatabaseManager:
             cache (dict): The cache dictionary
         '''
         return table in cache
+    
+    def __get_primary_key_sqlite(self, table: str) -> str:
+        '''
+        Gets the primary key for the table in SQLite
+        
+        Args:
+            table (str): The table name
+        
+        Returns:
+            str: The primary key field
+        '''
+        query = f'PRAGMA table_info({table})'
+        result = self.__db.query(query)
+        for row in result['data']:
+            if row[5] == 1:  # Sixth column in the result set indicates if the column is a primary key
+                return row[1]  # Second column in the result set contains the column names
+        return None
+
+    def __get_primary_key_information_schema(self, table: str) -> str:
+        '''
+        Gets the primary key for the table in MySQL, MariaDB, and PostgreSQL using SQL's native INFORMATION_SCHEMA
+        
+        Args:
+            table (str): The table name
+        
+        Returns:
+            str: The primary key field
+        '''
+        query = f'''
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = "{table}" AND COLUMN_KEY = "PRI"
+        '''
+        result = self.__db.query(query, cursor_settings={'dictionary': True})
+        if result:
+            return result['data'][0]['COLUMN_NAME']
+        return None
     
     def _apply_clause(self, query: Query, clause: str, value: str, query_args: dict) -> Query:
         match clause:
@@ -71,12 +110,13 @@ class DatabaseManager:
     # ------------------------------
     # Public methods
     # ------------------------------
-    def primary_key(self, table: str) -> str:
+    def primary_key(self, table: str, db_type: str) -> str:
         '''
         Get the primary key for the table
         
         Args:
             table (str): The table name
+            db_type (str): The database type
         
         Returns:
             str: The primary key field
@@ -85,16 +125,13 @@ class DatabaseManager:
         if self.__check_cache(table, self.__primary_key_cache):
             return self.__primary_key_cache[table]
         
-        query = f'''
-        SELECT COLUMN_NAME
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_NAME = "{table}" AND COLUMN_KEY = "PRI"
-        '''
         try:
-            result = self.__db.query(query, cursor_settings={'dictionary': True})
+            if db_type == 'sqlite':
+                primary_key = self.__get_primary_key_sqlite(table)
+            else:  # mysql, postgresql, mariadb
+                primary_key = self.__get_primary_key_information_schema(table)
             
-            if result:
-                primary_key = result['data'][0]['COLUMN_NAME']
+            if primary_key:
                 self.__primary_key_cache[table] = primary_key
                 return primary_key
             else:
@@ -103,12 +140,13 @@ class DatabaseManager:
             self.__logger.error(f'Error getting primary key for table {table}: {e}')
             return None
         
-    def get_column_names(self, table: str, db_type: str = 'mysql') -> list:
+    def get_column_names(self, table: str, db_type: str) -> list:
         '''
         Get the valid columns for the table
         
         Args:
             table (str): The table name
+            db_type (str): The database type
         
         Returns:
             list: The list of valid columns
@@ -117,26 +155,17 @@ class DatabaseManager:
         if self.__check_cache(table, self.__table_columns_cache):
             return self.__table_columns_cache[table]
         
-        cursor = self.__db.cursor
-
         try:
-            
             if db_type == 'sqlite':
-                query = f'PRAGMA table_info({table})'
-                result = self.__db.query(query)
-                columns = [row[1] for row in cursor.fetchall()]  # The second column in the result set contains the column names
+                columns = self.__get_column_names_sqlite(table)
+            else:  # mysql, postgresql, mariadb
+                columns = self.__get_column_names_information_schema(table)
+            
+            if columns:
                 self.__table_columns_cache[table] = columns
                 return columns
-            else: # mysql, postgre, mariadb
-                query = f'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = "{table}"'
-                result = self.__db.query(query, cursor_settings={'dictionary': True})
-                
-                if result:
-                    table_columns = [row['COLUMN_NAME'] for row in result['data']]
-                    self.__table_columns_cache[table] = table_columns
-                    return table_columns
-                else:
-                    raise ValueError(f'No columns found for table {table}')
+            else:
+                raise ValueError(f'No columns found for table {table}')
         except Exception as e:
             self.__logger.error(f'Error getting columns for table {table}: {e}')
             return []
@@ -165,7 +194,7 @@ class DatabaseManager:
         q = Query.from_(table).select(*fields) # SELECT * FROM table
         
         # Create the other query clauses
-        valid_args = ['where', 'order_by', 'sort', 'limit', 'offset']
+        valid_args = VALID_QUERY_ARGS['GET']
         
         for key, value in query_args.items():
             if key in valid_args:
