@@ -14,7 +14,7 @@ from flask_cors import CORS
 
 # Configurations
 from config import DATABASE_CONFIG, API_CONFIG, APP_CONFIG, WAITRESS_CONFIG
-from constants import APP_ENVS, API_CORE_URL_PREFIX, initialize_api_constants
+from constants import APP_ENVS, API_CORE_URL_PREFIX, API_REQUEST_METHODS, initialize_api_constants
 
 # Initialize API constants
 initialize_api_constants(API_CONFIG)
@@ -42,7 +42,8 @@ CORS(
     app = app, 
     resources = {
         f'{API_CORE_URL_PREFIX}/*': {
-                'origins': ALLOWED_ORIGINS
+                'origins': ALLOWED_ORIGINS,
+                'methods': list(API_REQUEST_METHODS)
             }
         }, 
     supports_credentials = True
@@ -78,6 +79,23 @@ def check_allowed_origin():
     except Exception as e:
         API_LOGGER.error(f'Error checking hidden table permission: {e}')
         g.table_visibility = 'hidden'
+        
+@app.before_request
+def restrict_methods_for_disallowed_origins():
+    '''
+    Restricts the request methods to GET if the origin is not in ALLOWED_ORIGINS.
+    '''
+    try:
+        origin = request.environ.get('HTTP_ORIGIN') or request.environ.get('HTTP_REFERER') or request.environ.get('HTTP_HOST')
+        if not origin.startswith('http://') and not origin.startswith('https://'):
+            origin = f'http://{origin}'
+        
+        if origin not in ALLOWED_ORIGINS and request.method != 'GET':
+            APP_LOGGER.warning(f'Method {request.method} not allowed for origin: {origin}')
+            abort(405)  # Method Not Allowed
+    except Exception as e:
+        API_LOGGER.error(f'Error restricting methods for disallowed origins: {e}')
+        abort(500)  # Internal Server Error
         
 # ------------------------------------- #
 # Error handlers                        #
@@ -124,7 +142,10 @@ def select_one(table, id):
 # ------------------------------------- #
 # DELETE - routes                       #
 # ------------------------------------- #
-    
+@app.delete(f'{API_CORE_URL_PREFIX}/<table>/<id>')
+def delete(table, id):
+    route = DeleteRoute(db, f'{API_CORE_URL_PREFIX}/{table}/{id}', DB_LOGGER, API_LOGGER)
+    return route.delete_one(table, id)
     
 # ------------------------------------- #
 # Main function                         #
