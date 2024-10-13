@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from utils.parse_utils import parse_secrets
-from constants import LOGGER
+from constants import API_LOGGER, DB_LOGGER, WAITRESS_LOGGER
 
 load_dotenv('.env')
 
@@ -33,7 +33,14 @@ API_CONFIG = {
     'id': os.getenv('API_CLIENT_ID'),
     'secret': os.getenv('API_CLIENT_SECRET'),
     'keys': os.getenv('API_KEYS', '').split(','),
-    'secrets': parse_secrets(os.getenv('API_SECRETS', ''), LOGGER),
+    'secrets': parse_secrets(os.getenv('API_SECRETS', ''), API_LOGGER),
     'allowed_origins': os.getenv('API_ALLOWED_ORIGINS', [API_URL]).split(','),
     'hidden_tables': os.getenv('API_HIDDEN_TABLES', []).split(',')
+}
+
+# Waitress config
+WAITRESS_CONFIG = {
+    'host': os.getenv('WAITRESS_HOST', None),
+    'port': os.getenv('WAITRESS_PORT', None),
+    'threads': os.getenv('WAITRESS_THREADS', None)
 }

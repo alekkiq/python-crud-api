@@ -4,3 +4,4 @@ Flask
 flask-cors
 python-dotenv
 pypika
+waitress
