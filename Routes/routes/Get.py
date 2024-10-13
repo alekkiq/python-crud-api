@@ -5,9 +5,9 @@ from flask import jsonify, request, g
 # The abstract class for the routes
 from Routes.Route import Route
 
-# Internal modules
+# Imports for proper typing
 from Logger.Logger import Logger
-from Database.Manager import DatabaseManager
+from Database.DatabaseManager import DatabaseManager
 
 # Constants
 from constants import VALID_QUERY_ARGS, HIDDEN_TABLES
@@ -17,26 +17,13 @@ class Get(Route):
     Handles the GET requests for the API.
     
     Attributes:
-        db (DatabaseManager): The database manager
+        db_manager (DatabaseManager): The database manager
+        path (str): The route path
         db_logger (Logger): The database logger instance
         api_logger (Logger): The API logger instance
-        path (str): The route path
-        method (str): The HTTP method
     '''
-    def __init__(self, db: DatabaseManager, path: str, db_logger: Logger, api_logger: Logger):
-        super().__init__(db, db_logger, api_logger, path, 'GET')
-        
-    def _handle_query_exceptions(self, query_args: dict, rules: list):
-        '''
-        Handles exceptions in query arguments based on provided rules.
-        
-        Args:
-            query_args (dict): The query arguments
-            rules (list): A list of rules to apply to the query arguments
-        '''
-        for rule in rules:
-            if rule['condition'](query_args):
-                rule['action'](query_args)
+    def __init__(self, db_manager: DatabaseManager, path: str, db_logger: Logger, api_logger: Logger):
+        super().__init__(db_manager, db_logger, api_logger, path, 'GET')
                 
     def _offset_without_limit_condition(self, query_args: dict) -> bool:
         return 'offset' in query_args and 'limit' not in query_args
@@ -59,21 +46,21 @@ class Get(Route):
         query_args = self._parse_query_args(request, VALID_QUERY_ARGS['GET'], table)
         
         if pk is not None:
-            primary_key = self.db.primary_key(table)
+            primary_key = self.db_manager.primary_key(table, self.db_manager.db_type)
             if primary_key is None:
                 return jsonify({'error': 'Primary key not found'}), 400
             query_args['where'] = f'{primary_key} = {pk}'
         
         # Handle query exceptions
         rules = [
-            {
+            { # Remove offset if limit is not provided
                 'condition': self._offset_without_limit_condition, 
                 'action': self._remove_offset_action
-            }
+            }, # ... add more rules here
         ]
         self._handle_query_exceptions(query_args, rules)
         
-        result = self.db.select(
+        result = self.db_manager.select(
             table_name=table, 
             fields=['*'], 
             query_args=query_args
@@ -104,5 +91,5 @@ class Get(Route):
         return self._get(
             table = table, 
             query_args = request.args, 
-            pk=pk
+            pk = pk
         )
