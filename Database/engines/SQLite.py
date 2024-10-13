@@ -27,17 +27,19 @@ class SQLiteDatabase(Database):
         Returns:
             sqlite3.Connection: The database connection object
         '''
-        connection = None
-        
         try:
+            if not self.config['database'].endswith('.db'):
+                self.config['database'] = self.config['database'] + '.db'
+            
             connection = sqlite3.connect(
-                database = self.config['database'] + '.db', 
+                database = self.config['database'], 
                 autocommit = self.config['autocommit'],
                 check_same_thread = False
             )
             self._log(DATABASE_STATUS_MESSAGES['connection_success'](self.config, 'SQLite')['message'], 'info')
         except sqlite3.Error as e:
             self._log(DATABASE_STATUS_MESSAGES['connection_fail'](self.config, e)['message'], 'error')
+            connection = None
         finally:
             return connection
         
@@ -59,7 +61,6 @@ class SQLiteDatabase(Database):
         
         try:
             self._log(f'Executing query: {query}', 'info')
-            self.cursor.execute('BEGIN')
             self.cursor.execute(query)
             result = self.cursor.fetchall()
             status = {
