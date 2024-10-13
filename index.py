@@ -24,8 +24,8 @@ from constants import API_KEYS, API_SECRETS, ALLOWED_ORIGINS, HIDDEN_TABLES
 from constants import APP_LOGGER, DB_LOGGER, API_LOGGER, WAITRESS_LOGGER
 
 # Modules
-from Database.Factory import DatabaseFactory
-from Database.Manager import DatabaseManager
+from Database.DatabaseFactory import DatabaseFactory
+from Database.DatabaseManager import DatabaseManager
 
 # Routes
 from Routes.routes.Get import Get as GetRoute

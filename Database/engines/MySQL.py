@@ -1,6 +1,9 @@
+# Python deps & external libraries
 import mysql.connector
 
+# Imports for proper typing
 from typing import override
+from Logger.Logger import Logger
 
 from ..Database import Database
 from ..status_codes import DATABASE_STATUS_MESSAGES
@@ -9,7 +12,7 @@ class MySQLDatabase(Database):
     '''
     Database type: MySQL (MariaDB)
     '''
-    def __init__(self, config: dict, logger):
+    def __init__(self, config: dict, logger: Logger):
         '''
         Initialize the MySQL database object.
         
@@ -46,7 +49,7 @@ class MySQLDatabase(Database):
             return connection
         
     @override
-    def query(self, query: str, cursor_settings: dict = None, query_arguments: dict = None) -> dict:
+    def query(self, query: str, table_name: str = None, cursor_settings: dict = None, query_arguments: dict = None, is_meta_query: bool = False) -> dict:
         '''
         Execute a query on the MySQL database.
         
@@ -77,7 +80,9 @@ class MySQLDatabase(Database):
         finally:
             return self._build_query_result(
                 query = query,
+                table_name = table_name,
                 query_arguments = query_arguments,
+                is_meta_query = is_meta_query,
                 status = status,
                 affected_rows = self.cursor.rowcount,
                 result_group = self.cursor.with_rows,

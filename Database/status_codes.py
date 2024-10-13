@@ -1,3 +1,5 @@
+# Define the status codes and coresponding messages for the database operations
+
 DATABASE_STATUS_CODES = {
     'software_error': 0,
     'connection_fail': 1,

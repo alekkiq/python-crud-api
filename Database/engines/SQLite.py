@@ -1,6 +1,8 @@
 import sqlite3
 
+# Imports for proper typing
 from typing import override
+from Logger.Logger import Logger
 
 from ..Database import Database
 from ..status_codes import DATABASE_STATUS_MESSAGES
@@ -9,7 +11,7 @@ class SQLiteDatabase(Database):
     '''
     Database type: MySQL (MariaDB)
     '''
-    def __init__(self, config: dict, logger):
+    def __init__(self, config: dict, logger: Logger):
         '''
         Initialize the MySQL database object.
         
@@ -44,7 +46,7 @@ class SQLiteDatabase(Database):
             return connection
         
     @override
-    def query(self, query: str, cursor_settings: dict = None, query_arguments: dict = None) -> dict:
+    def query(self, query: str, table_name: str = None, cursor_settings: dict = None, query_arguments: dict = None) -> dict:
         '''
         Execute a query on the SQLite database.
         
@@ -75,6 +77,7 @@ class SQLiteDatabase(Database):
         finally:
             return self._build_query_result(
                 query = query,
+                table_name = table_name,
                 query_arguments = query_arguments,
                 status = status,
                 affected_rows = len(result),
