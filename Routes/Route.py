@@ -21,9 +21,10 @@ class Route(ABC):
         callback (callable): The callback function
         method (str): The HTTP method
     '''
-    def __init__(self, db: DatabaseManager, logger: Logger, path: str, method: str):
+    def __init__(self, db: DatabaseManager, db_logger: Logger, api_logger: Logger, path: str, method: str):
         self.db = db
-        self.logger = logger
+        self.db_logger = db_logger
+        self.api_logger = api_logger
         self.path = path
         self.method = method
     
@@ -66,7 +67,7 @@ class Route(ABC):
                 if key in valid_columns:
                     where_clauses.append(f'{key}="{value}"')
                 else:
-                    self.logger.warning(f'Invalid where clause key: `{key}`')
+                    self.api_logger.warning(f'Invalid where clause key: `{key}`')
         
         if where_clauses:
             query_args['where'] = ' AND '.join(where_clauses)
