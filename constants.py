@@ -36,4 +36,9 @@ def initialize_api_constants(config: dict):
 # ------------------------------ #
 API_CORE_URL_PREFIX = '/api/v1'
 API_REQUEST_METHODS = ['GET', 'POST', 'PUT', 'DELETE']
-VALID_GET_QUERY_ARGS = ['where', 'order_by', 'sort', 'limit', 'offset']
+VALID_QUERY_ARGS = {
+    'GET': ['where', 'order_by', 'sort', 'limit', 'offset'],
+    'POST': ['data'],
+    'PUT': ['data', 'where'],
+    'DELETE': ['where']
+}
