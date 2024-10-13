@@ -7,34 +7,42 @@ from flask import Flask, request, jsonify, g, abort
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-# Constants
+# -------------------------- #
+# Constants & configurations #
+# -------------------------- #
+
 # Configurations
-from constants import DATABASE_CONFIG, API_CONFIG, APP_CONFIG
-from constants import ALLOWED_ORIGINS, API_KEYS, API_SECRETS, API_CORE_URL_PREFIX
+from config import DATABASE_CONFIG, API_CONFIG, APP_CONFIG
+from constants import API_CORE_URL_PREFIX, initialize_api_constants
+
+# Initialize API constants
+initialize_api_constants(API_CONFIG)
+from constants import API_KEYS, API_SECRETS, ALLOWED_ORIGINS, HIDDEN_TABLES
+
+# Logger
+from constants import LOGGER as logger
 
 # Modules
-from Logger.Logger import Logger
 from Database.Factory import DatabaseFactory
 from Database.Manager import DatabaseManager
 
 # Routes
 from Routes.routes.Get import Get as GetRoute
 
-config = API_CONFIG()
-
-# Start the Logger
-logger = Logger().get_logger()
-
 # Initialize the Database, and the DatabaseManager
-database = DatabaseFactory.create_database(DATABASE_CONFIG(), logger)
+database = DatabaseFactory.create_database(DATABASE_CONFIG, logger)
 db = DatabaseManager(database, logger)
 
 # Initialize the Flask app
-app = Flask(APP_CONFIG().get('name', __name__))
-api_url = config.get('url')
+app = Flask(APP_CONFIG.get('name', __name__))
+api_url = API_CONFIG.get('url', 'http://localhost:5000')
 
 # Enable CORS
-CORS(app, resources={f'{API_CORE_URL_PREFIX}/*': {'origins': ALLOWED_ORIGINS}}, supports_credentials=True)
+CORS(
+    app = app, 
+    resources={f'{API_CORE_URL_PREFIX}/*': {'origins': ALLOWED_ORIGINS}}, 
+    supports_credentials=True
+)
 
 # Avoid favicon.ico requests
 @app.route('/favicon.ico')
@@ -103,5 +111,5 @@ def select_one(table, id):
 # ...
     
 if __name__ == '__main__':
-    debug = APP_CONFIG().get('debug', True)
+    debug = APP_CONFIG.get('debug', True)
     app.run(debug=debug, port=5000)

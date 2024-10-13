@@ -3,32 +3,28 @@
 # Define all the constants used in the program.
 #
 # --------------------------------------------
-
-
-# ------------------------------ #
-# App constants                  #
-# ------------------------------ #
-from config import app_config as APP_CONFIG
-
-# ------------------------------ #
-# Database constants             #
-# ------------------------------ #
-from config import database_config as DATABASE_CONFIG
     
 # ------------------------------ #
 # Logger constants               #
 # ------------------------------ #
+from logger_setup import get_logger as get_logger
+
+# Initialize the logger instance
+LOGGER = get_logger()
 
 # ------------------------------ #
 # API constants                  #
 # ------------------------------ #
-from config import api_config as API_CONFIG
-
-API_KEYS = set(API_CONFIG().get('keys'))
-API_SECRETS = API_CONFIG().get('secrets')
-HIDDEN_TABLES = API_CONFIG().get('hidden_tables')
-ALLOWED_ORIGINS = API_CONFIG().get('allowed_origins')
-
+def initialize_api_constants(config: dict):
+    '''
+    Initialize the constants from the config files.
+    '''
+    global API_KEYS, API_SECRETS, HIDDEN_TABLES, ALLOWED_ORIGINS
+    
+    API_KEYS = set(config.get('keys'))
+    API_SECRETS = config.get('secrets')
+    HIDDEN_TABLES = config.get('hidden_tables')
+    ALLOWED_ORIGINS = config.get('allowed_origins')
 
 # ------------------------------ #
 # API Route constants            #
@@ -36,9 +32,3 @@ ALLOWED_ORIGINS = API_CONFIG().get('allowed_origins')
 API_CORE_URL_PREFIX = '/api/v1'
 API_REQUEST_METHODS = ['GET', 'POST', 'PUT', 'DELETE']
 VALID_GET_QUERY_ARGS = ['where', 'order_by', 'sort', 'limit', 'offset']
-
-
-# ------------------------------ #
-# Other constants                #
-# ------------------------------ #
-# ...
