@@ -10,7 +10,7 @@ from Logger import Logger
 from Database.Manager import DatabaseManager
 
 # Constants
-from constants import VALID_GET_QUERY_ARGS, HIDDEN_TABLES
+from constants import VALID_QUERY_ARGS, HIDDEN_TABLES
 
 class Get(Route):
     '''
@@ -55,7 +55,7 @@ class Get(Route):
         if self._block_hidden_table(table):
             return self._block_hidden_table(table)
         
-        query_args = self._parse_query_args(request, VALID_GET_QUERY_ARGS, table)
+        query_args = self._parse_query_args(request, VALID_QUERY_ARGS['GET'], table)
         
         if pk is not None:
             primary_key = self.db.primary_key(table)
