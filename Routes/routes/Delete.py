@@ -25,7 +25,7 @@ class Delete(Route):
     def __init__(self, db_manager: DatabaseManager, path: str, db_logger: Logger, api_logger: Logger):
         super().__init__(db_manager, db_logger, api_logger, path, 'DELETE')
         
-    def _delete(self, table: str, query_args: dict, pk: str = None):
+    def _delete(self, table: str, query_args: dict):
         '''
         Common logic for handling DELETE requests.
         
@@ -45,7 +45,7 @@ class Delete(Route):
     
     def delete_one(self, table: str, pk: str):
         '''
-        Deletes a single record from the table by the primary key.
+        Deletes a single record from the table by the primary key value.
         
         Args:
             table (str): The table name
@@ -56,6 +56,5 @@ class Delete(Route):
             query_args = {
                 # Only delete the record with the primary key for safety
                 'where': f'{self.db_manager.primary_key(table, self.db_manager.db_type)} = {pk}'
-            },
-            pk = pk
+            }
         )

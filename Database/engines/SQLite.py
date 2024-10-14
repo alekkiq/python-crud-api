@@ -5,7 +5,7 @@ from typing import override
 from Logger import Logger
 
 from .. import Database
-from ..status_codes import DATABASE_STATUS_MESSAGES
+from STATUS import DATABASE_STATUS_MESSAGES
 
 class SQLiteDatabase(Database):
     '''
@@ -38,9 +38,9 @@ class SQLiteDatabase(Database):
                 autocommit = self.config['autocommit'],
                 check_same_thread = False
             )
-            self._log(DATABASE_STATUS_MESSAGES['connection_success'](self.config, 'SQLite')['message'], 'info')
+            self.logger(DATABASE_STATUS_MESSAGES['connection_success'](self.config, 'SQLite')['message'], 'info')
         except sqlite3.Error as e:
-            self._log(DATABASE_STATUS_MESSAGES['connection_fail'](self.config, e)['message'], 'error')
+            self.logger(DATABASE_STATUS_MESSAGES['connection_fail'](self.config, e)['message'], 'error')
             connection = None
         finally:
             return connection
@@ -65,16 +65,15 @@ class SQLiteDatabase(Database):
         }
         
         try:
-            self._log(f'Executing query: {query}', 'info')
             self.cursor.execute(query)
             result = self.cursor.fetchall()
-            self._log(DATABASE_STATUS_MESSAGES['query_success'](str(self.cursor.statement))['message'], 'info')
+            self.logger.info(DATABASE_STATUS_MESSAGES['query_success'](str(self.cursor.statement))['message'])
         except sqlite3.Error as e:
             self.connection.rollback()
             status = {'success': False, 'type': 'error'}
-            self._log(DATABASE_STATUS_MESSAGES['query_fail'](str(self.cursor.statement), e)['message'], 'error')   
+            self.logger.error(DATABASE_STATUS_MESSAGES['query_fail'](str(self.cursor.statement), e)['message'])   
         finally:
-            return self._build_query_result(
+            return self._build_get_query_result(
                 query = query,
                 table_name = table_name,
                 query_arguments = query_arguments,
