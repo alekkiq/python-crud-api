@@ -7,6 +7,10 @@ from flask import jsonify
 from Database import DatabaseManager
 from Logger import Logger
 
+# Status codes
+from STATUS import DATABASE_STATUS_MESSAGES as DB_STATUS_MESSAGES
+from STATUS import API_STATUS_MESSAGES as API_STATUS_MESSAGES
+
 # Constants
 from constants import HIDDEN_TABLES
 
@@ -36,7 +40,7 @@ class Route(ABC):
             table (str): The table name
         '''
         if flask.g.table_visibility == 'hidden' and table in HIDDEN_TABLES:
-            return jsonify({'error': 'Table permission denied.', 'status': 404}), 404
+            return jsonify({'error': 'Request origin permission denied.', 'status': 404}), 404
         return None
     
     def _parse_query_args(self, request: flask.Request, valid_args: list, table: str) -> dict:
@@ -74,12 +78,59 @@ class Route(ABC):
             if key not in query_args and key not in valid_args_set and key not in valid_columns
         ]
         for key in invalid_keys:
-            self.api_logger.warning(f'Invalid where clause key: `{key}`')
+            error_message = API_STATUS_MESSAGES['invalid_query_arg'](key)
+            self.api_logger.warning(error_message['message'])
         
         if where_clauses:
             query_args['where'] = ' AND '.join(where_clauses)
         
         return query_args
+    
+    def _parse_data(self, data: dict, table: str) -> dict:
+        '''
+        Parses and validates the incoming request's data against the table's columns.
+        
+        Args:
+            data (dict): The data to be validated
+            table (str): The table name for validation
+        
+        Returns:
+            dict: The parsed data or an error message
+        '''
+        valid_columns = self.db_manager.get_column_names(table, self.db_manager.db_type)
+        
+        # Check for invalid columns
+        invalid_columns = [col for col in data if col not in valid_columns]
+        if invalid_columns:
+            error_message = DB_STATUS_MESSAGES['insert_fail'](data, table, f'Invalid columns in insert data: `{", ".join(invalid_columns)}`')
+            self.api_logger.error(error_message['message'])
+            return {'success': False, 'status': error_message}
+        
+        # Check for required fields
+        required_fields = self.db_manager.get_column_names(table, self.db_manager.db_type, required_fields=True)
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            error_message = DB_STATUS_MESSAGES['insert_fail'](data, table, f'Request Data is missing required fields of `{table}`. Missing fields: `{", ".join(missing_fields)}`')
+            self.api_logger.error(error_message['message'])
+            return {'success': False, 'status': error_message}
+        
+        # Check for unique fields already in use
+        unique_columns = self.db_manager.get_column_names(table, self.db_manager.db_type, unique_fields=True)
+        for column in unique_columns:
+            if column in data:
+                query_args = {'where': f'{column} = {data[column]}'}
+                result = self.db_manager.select(
+                    table, 
+                    fields=[column], 
+                    query_args=query_args
+                )
+                
+                if result['result_group'] and len(result['data']) > 0:
+                    error_message = DB_STATUS_MESSAGES['already_used'](column, table)
+                    self.api_logger.error(error_message['message'])
+                    return {'success': False, 'status': error_message}
+        
+        return {'success': True, 'data': data}
     
     def _handle_query_exceptions(self, query_args: dict, rules: list):
         '''
