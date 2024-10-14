@@ -4,7 +4,7 @@ from pypika.dialects import MySQLQuery as Query
 
 class QueryBuilder:
     '''
-    Helper class for building the database queries.
+    Helper class for building the database queries using PyPika.
     '''
     @staticmethod
     def apply_clause(query: Query, clause: str, value: str, query_args: dict) -> Query:

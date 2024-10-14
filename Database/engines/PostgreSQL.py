@@ -6,7 +6,7 @@ from typing import override
 from Logger import Logger
 
 from .. import Database
-from ..status_codes import DATABASE_STATUS_MESSAGES
+from STATUS import DATABASE_STATUS_MESSAGES
 
 class PostgreSQLDatabase(Database):
     '''
@@ -47,9 +47,9 @@ class PostgreSQLDatabase(Database):
             if 'charset' in self.config:
                 connection.set_client_encoding(self.config['charset'])
             
-            self._log(DATABASE_STATUS_MESSAGES['connection_success'](self.config, 'PostgreSQL')['message'], 'info')
+            self.logger.info(DATABASE_STATUS_MESSAGES['connection_success'](self.config, 'PostgreSQL')['message'])
         except psycopg2.Error as e:
-            self._log(DATABASE_STATUS_MESSAGES['connection_fail'](self.config, e)['message'], 'error')
+            self.logger.error(DATABASE_STATUS_MESSAGES['connection_fail'](self.config, e)['message'])
             connection = None
         finally:
             return connection
@@ -65,7 +65,7 @@ class PostgreSQLDatabase(Database):
             query_arguments (dict): The query arguments
         '''
         if self.connection is None:
-            return DATABASE_STATUS_MESSAGES['connection_fail'](self.__config, 'No connection established.')
+            return DATABASE_STATUS_MESSAGES['connection_fail'](self.config, 'No connection established.')
         
         result = []
         status = {
@@ -78,13 +78,13 @@ class PostgreSQLDatabase(Database):
             self.cursor = self.connection.cursor(cursor_factory = cursor_factory)
             self.cursor.execute(query)
             result = self.cursor.fetchall()
-            self._log(DATABASE_STATUS_MESSAGES['query_success'](query)['message'], 'info')
+            self.logger.info(DATABASE_STATUS_MESSAGES['query_success'](query)['message'])
         except psycopg2.OperationalError as e:
             self.connection.rollback()
             status = {'success': False, 'type': 'error'}
-            self._log(DATABASE_STATUS_MESSAGES['query_fail'](query, e)['message'], 'error')
+            self.logger.error(DATABASE_STATUS_MESSAGES['query_fail'](query, e)['message'])
         finally:
-            return self._build_query_result(
+            return self._build_get_query_result(
                 query = query,
                 table_name = table_name,
                 query_arguments = query_arguments,

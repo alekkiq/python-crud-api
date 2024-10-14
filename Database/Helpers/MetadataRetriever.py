@@ -45,18 +45,70 @@ class MetadataRetriever:
             primary_key_column = result['data'][0]['COLUMN_NAME']
             return primary_key_column
         return None
+    
+    @staticmethod
+    def get_table_names_sqlite(db: Database) -> list:
+        '''
+        Retrieves the table names from MySQL, PostgreSQL, or MariaDB database.
+        
+        Args:
+            db (Database): The database instance
+            
+        Returns:
+            list: A list of table names
+        '''
+        query = '''
+            SELECT name
+            FROM sqlite_master
+            WHERE type = 'table'
+            AND name NOT LIKE 'sqlite_%'
+        '''
+        result = db.query(query, cursor_settings={'dictionary': True}, is_meta_query=True)
+
+        if result:
+            tables = [row['name'] for row in result['data']]
+            return tables
+        return []
+    
+    @staticmethod
+    def get_table_names_information_schema(db: Database) -> list:
+        '''
+        Retrieves the table names from MySQL, PostgreSQL, or MariaDB database.
+        
+        Args:
+            db (Database): The database instance
+            
+        Returns:
+            list: A list of table names
+        '''
+        query = '''
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_TYPE = "BASE TABLE"
+        '''
+        result = db.query(query, cursor_settings={'dictionary': True}, is_meta_query=True)
+
+        if result:
+            tables = [row['TABLE_NAME'] for row in result['data']]
+            return tables
+        return []
 
     @staticmethod
-    def get_column_names_sqlite(db: Database, table: str) -> list:
+    def get_column_names_sqlite(db: Database, table: str, required_fields: bool = False, unique_fields: bool = False) -> list:
         '''
         Retrieves the column names for the specified table from an SQLite database.
         
         Args:
+            db (Database): The database instance
             table (str): The name of the table
+            required_fields (bool): If True, only return the required fields
             
         Returns:
             list: A list of column names
         '''
+        
+        # TODO - Add support for required & unique fields
+        
         query = f'PRAGMA table_info({table})'
         result = db.query(query, is_meta_query=True)
 
@@ -66,12 +118,14 @@ class MetadataRetriever:
         return []
 
     @staticmethod
-    def get_column_names_information_schema(db: Database, table: str) -> list:
+    def get_column_names_information_schema(db: Database, table: str, required_fields: bool = False, unique_fields: bool = False) -> list:
         '''
         Retrieves the column names for the specified table from MySQL, PostgreSQL, or MariaDB database.
         
         Args:
+            db (Database): The database instance
             table (str): The name of the table
+            required_fields (bool): If True, only return the required fields
             
         Returns:
             list: A list of column names
@@ -81,6 +135,13 @@ class MetadataRetriever:
             FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_NAME = "{table}"
         '''
+        
+        if required_fields:
+            query += ' AND IS_NULLABLE = "NO" AND COLUMN_DEFAULT IS NULL AND EXTRA NOT LIKE "%auto_increment%"'
+        
+        if unique_fields:
+            query += ' AND COLUMN_KEY = "UNI"'
+        
         result = db.query(query, cursor_settings={'dictionary': True}, is_meta_query=True)
         
         if result:

@@ -5,6 +5,9 @@ from datetime import datetime, timezone
 # Imports for proper typing
 from Logger import Logger
 
+# Status messages
+from STATUS import DATABASE_STATUS_MESSAGES as STATUS_MESSAGES
+
 # Constants
 from constants import API_CORE_URL_PREFIX
 
@@ -17,14 +20,14 @@ class Database(ABC):
         logger (Logger): The logger instance
     '''
     def __init__(self, config: dict, logger: Logger):
-        self.__logger = logger
+        self.logger = logger
         self.config = config
         self.connection = self._create_connection()
         self.cursor = self.connection.cursor()
         
         # Define valid SQL actions
         self.valid_sql_actions = ('select', 'insert', 'update', 'delete')
-        self.committable_sql_actions = ('insert', 'update', 'delete')
+        self.committable_actions = ('insert', 'update', 'delete')
         
     @abstractmethod
     def _create_connection(self) -> any:
@@ -59,14 +62,14 @@ class Database(ABC):
         '''
         try:
             query_action = query.strip().lower().split(' ')[0]
-            if query_action not in self.committable_sql_actions:
-                return
+            if query_action not in self.committable_actions:
+                return # do not commit changes if the query is not committable (SELECT)
             self.connection.commit()
-            self._log(f'Changes committed to the database: {query}', 'info')
+            self.logger.info(f'Changes committed to the database: {query}')
         except Exception as e:
-            self._log(f'Failed to commit changes to the database: {query}. Error: {str(e)}', 'error')
+            self.logger.error(f'Failed to commit changes to the database: {query}. Error: {str(e)}')
     
-    def _build_query_result(self, query: str, table_name: str, query_arguments: dict, is_meta_query: bool = False, status: dict = {'success': True, 'type': 'info'}, affected_rows: int = 0, result_group: bool = False, data: list = []) -> dict:
+    def _build_get_query_result(self, query: str, table_name: str, query_arguments: dict, is_meta_query: bool = False, status: dict = {'success': True, 'type': 'info'}, affected_rows: int = 0, result_group: bool = False, data: list = []) -> dict:
         '''
         Constructs the query result dictionary.
         
@@ -153,21 +156,3 @@ class Database(ABC):
             },
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
-        
-    def _log(self, message: str, level: str = 'info'):
-        '''
-        Logs a message
-        
-        Args:
-            message (str): The message to log
-            level (str): The log level
-        '''
-        match level:
-            case 'info':
-                self.__logger.info(message)
-            case 'warning':
-                self.__logger.warning(message)
-            case 'error':
-                self.__logger.error(message)
-            case _:
-                self.__logger.info(message)

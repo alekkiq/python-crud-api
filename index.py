@@ -129,11 +129,13 @@ def select_one(table, id):
     route = GetRoute(db, f'{API_CORE_URL_PREFIX}/{table}/{id}', DB_LOGGER, API_LOGGER)
     return route.get_one(table, id) 
 
-
 # ------------------------------------- #
 # POST - routes                         #
 # ------------------------------------- #
-# ...
+@app.post(f'{API_CORE_URL_PREFIX}/<table>')
+def insert(table):
+    route = PostRoute(db, f'{API_CORE_URL_PREFIX}/{table}', DB_LOGGER, API_LOGGER)
+    return route.insert_one(table)
 
 # ------------------------------------- #
 # PUT - routes                          #
