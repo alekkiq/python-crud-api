@@ -51,12 +51,16 @@ class MySQLDatabase(Database):
     @override
     def query(self, query: str, table_name: str = None, cursor_settings: dict = None, query_arguments: dict = None, is_meta_query: bool = False) -> dict:
         '''
-        Execute a query on the MySQL database.
+        Execute `query` on the MySQL database.
         
         Args:
             query (str): The query string
             cursor_settings (dict): The cursor settings
             query_arguments (dict): The query arguments
+            is_meta_query (bool): If the query is a meta query or not
+            
+        Returns:
+            dict: The query result dictionary
         '''
         if self.connection is None:
             return DATABASE_STATUS_MESSAGES['connection_fail'](self.config, 'No connection established.')
@@ -68,9 +72,9 @@ class MySQLDatabase(Database):
         }
         
         try:
-            self.cursor = self.connection.cursor(**cursor_settings)
-            self.cursor.execute(query)
-            result = self.cursor.fetchall()
+            cursor = self.connection.cursor(**cursor_settings)
+            cursor.execute(query)
+            result = cursor.fetchall()
             
             # Commit changes if necessary
             self._commit_changes(query)
@@ -78,8 +82,8 @@ class MySQLDatabase(Database):
             self.logger.info(DATABASE_STATUS_MESSAGES['query_success'](query)['message'])
         except mysql.connector.Error as e:
             self.connection.rollback()
-            status = {'success': False, 'type': 'error'}
-            self.logger.error(DATABASE_STATUS_MESSAGES['query_fail'](query, e)['message'])
+            status = DATABASE_STATUS_MESSAGES['query_fail'](e, query)
+            self.logger.error(status['message'])
         finally:
             return self._build_get_query_result(
                 query = query,
@@ -87,7 +91,7 @@ class MySQLDatabase(Database):
                 query_arguments = query_arguments,
                 is_meta_query = is_meta_query,
                 status = status,
-                affected_rows = self.cursor.rowcount,
-                result_group = self.cursor.with_rows,
+                affected_rows = cursor.rowcount if cursor.rowcount else 0,
+                result_group = cursor.with_rows if cursor.with_rows else False,
                 data = result
             )
