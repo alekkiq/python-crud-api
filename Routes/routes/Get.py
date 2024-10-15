@@ -26,11 +26,32 @@ class Get(Route):
         super().__init__(db_manager, db_logger, api_logger, path, 'GET')
                 
     def _offset_without_limit_condition(self, query_args: dict) -> bool:
+        '''
+        Checks if the query has an offset argument without a limit.
+        '''
         return 'offset' in query_args and 'limit' not in query_args
 
     def _remove_offset_action(self, query_args: dict):
+        '''
+        Removes the offset argument from the query arguments.
+        '''
         del query_args['offset']
+        
+    def _limit_is_zero_condition(self, query_args: dict) -> bool:
+        '''
+        Checks if the limit is set to zero (or -1).
+        '''
+        return 'limit' in query_args and (query_args['limit'] == '0' or query_args['limit'] == '-1')
        
+    def _set_limit_to_none_action(self, query_args: dict):
+        '''
+        Sets the limit to None.
+        
+        Args:
+            query_args (dict): The query arguments
+        '''
+        query_args['limit'] = None   
+    
     def _get(self, table: str, query_args: dict, pk: str = None):
         '''
         Common logic for handling GET requests.
@@ -56,7 +77,12 @@ class Get(Route):
             { # Remove offset if limit is not provided
                 'condition': self._offset_without_limit_condition, 
                 'action': self._remove_offset_action
-            }, # ... add more rules here
+            }, 
+            { # Set limit to None if limit is 0 or -1 (bypass hardcoded default limit)
+                'condition': self._limit_is_zero_condition,
+                'action': self._set_limit_to_none_action
+            }
+            # ... add more rules here
         ]
         self._handle_query_exceptions(query_args, rules)
         
