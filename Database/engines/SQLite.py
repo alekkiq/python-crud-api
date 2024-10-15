@@ -48,7 +48,7 @@ class SQLiteDatabase(Database):
     @override
     def query(self, query: str, table_name: str = None, cursor_settings: dict = None, query_arguments: dict = None) -> dict:
         '''
-        Execute a query on the SQLite database.
+        Execute `query` on the SQLite database.
         
         Args:
             query (str): The query string
@@ -65,13 +65,23 @@ class SQLiteDatabase(Database):
         }
         
         try:
-            self.cursor.execute(query)
-            result = self.cursor.fetchall()
-            self.logger.info(DATABASE_STATUS_MESSAGES['query_success'](str(self.cursor.statement))['message'])
+            # Apply cursor settings if provided
+            if cursor_settings:
+                if cursor_settings.get('row_factory') == 'dict':
+                    self.connection.row_factory = sqlite3.Row
+                
+            cursor = self.connection.cursor()
+            cursor.execute(query)
+            result = cursor.fetchall()
+            
+            # Commit changes if necessary
+            self._commit_changes(query)
+            
+            self.logger.info(DATABASE_STATUS_MESSAGES['query_success'](query)['message'])
         except sqlite3.Error as e:
             self.connection.rollback()
-            status = {'success': False, 'type': 'error'}
-            self.logger.error(DATABASE_STATUS_MESSAGES['query_fail'](str(self.cursor.statement), e)['message'])   
+            status = DATABASE_STATUS_MESSAGES['query_fail'](e, query)
+            self.logger.error(status['message'])
         finally:
             return self._build_get_query_result(
                 query = query,
