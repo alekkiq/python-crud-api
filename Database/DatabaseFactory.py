@@ -9,7 +9,7 @@ class DatabaseFactory:
     @staticmethod
     def create_database(config: dict, logger: Logger) -> Database:
         '''
-        Creates a new database object based on the configuration.
+        Creates a new database object based on `config`.
         
         Args:
             database_type (str): The database type

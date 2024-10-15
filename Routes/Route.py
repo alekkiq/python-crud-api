@@ -34,7 +34,7 @@ class Route(ABC):
     
     def _block_hidden_table(self, table: str):
         '''
-        Checks if the table is visible to the current request origin.
+        Checks if `table` is visible to the current request origin.
         
         Args:
             table (str): The table name
@@ -45,7 +45,7 @@ class Route(ABC):
     
     def _parse_query_args(self, request: flask.Request, valid_args: list, table: str) -> dict:
         '''
-        Parses the query arguments from the request.
+        Parses the query arguments from the `request`.
         
         Args:
             request (flask.Request): The request object
@@ -62,7 +62,7 @@ class Route(ABC):
         for arg in valid_args:
             if arg in request.args:
                 query_args[arg] = request.args.get(arg)
-        
+
         # Get valid columns for the table
         valid_columns = self.db_manager.get_column_names(table, self.db_manager.db_type)
         
@@ -88,7 +88,7 @@ class Route(ABC):
     
     def _parse_data(self, data: dict, table: str) -> dict:
         '''
-        Parses and validates the incoming request's data against the table's columns.
+        Parses and validates the incoming request's `data` against the `table`'s columns.
         
         Args:
             data (dict): The data to be validated
@@ -134,7 +134,7 @@ class Route(ABC):
     
     def _handle_query_exceptions(self, query_args: dict, rules: list):
         '''
-        Handles exceptions in query arguments based on provided rules.
+        Handles exceptions in query arguments `query_args` based on provided `rules`.
         
         Args:
             query_args (dict): The query arguments

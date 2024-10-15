@@ -13,7 +13,8 @@ DATABASE_STATUS_CODES = {
     'update_success': 200,          # OK
     'update_fail': 400,             # Bad Request
     'key_mismatch': 400,            # Bad Request
-    'query_fail': 400               # Bad Request
+    'query_fail': 400,              # Bad Request
+    'query_success': 200            # OK
 }
 
 DATABASE_STATUS_MESSAGES = {
@@ -54,6 +55,11 @@ DATABASE_STATUS_MESSAGES = {
         'status': DATABASE_STATUS_CODES['query_fail'],
         'error': error,
         'type': 'error'
+    },
+    'query_success': lambda query: {
+        'message': f'Successfully executed query `{query}`',
+        'status': DATABASE_STATUS_CODES['query_success'],
+        'type': 'info'
     },
     'insert_success': lambda record, table: {
         'message': f'Succesfully inserted a new record to `{table}`',
