@@ -23,7 +23,6 @@ class Database(ABC):
         self.logger = logger
         self.config = config
         self.connection = self._create_connection()
-        self.cursor = self.connection.cursor()
         
         # Define valid SQL actions
         self.valid_sql_actions = ('select', 'insert', 'update', 'delete')
@@ -39,7 +38,7 @@ class Database(ABC):
     @abstractmethod
     def query(self, query: str, table_name: str = None, cursor_settings: dict = None, query_arguments: dict = None, is_meta_query: bool = False) -> dict:
         '''
-        The method to execute a query on the database.
+        The core method to execute a query on the database.
         
         Args:
             query (str): The query string
@@ -52,7 +51,7 @@ class Database(ABC):
     
     def _commit_changes(self, query: str) -> dict:
         '''
-        Checks if the query is a committable action and commits the changes to the database.
+        Checks if `query` is a committable action and commits the changes to the database.
         
         Args:
             query (str): The query string
@@ -143,7 +142,7 @@ class Database(ABC):
                 'arguments': query_arguments
             },
             'data': data,
-            'metadata': {
+            'meta': {
                 'total_records': total_records,
                 'page': page,
                 'per_page': per_page,
