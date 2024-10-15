@@ -59,10 +59,11 @@ class Post(Route):
         Args:
             table (str): The table name
         '''
-        data = request.get_json()
+        if not request.get_json():
+            return jsonify({'error': 'No data provided.', 'status': 400}), 400
         
         return self._insert(
             table = table, 
             query_args = request.args,
-            data = data
+            data = request.get_json()
         )

@@ -6,7 +6,7 @@ class ParseUtils:
     @staticmethod
     def parse_secrets(secrets_str: str, logger = None) -> dict:
         '''
-        Parse the secrets string into a dictionary.
+        Parse the secrets string `secrets_str` into a dictionary.
         
         Args:
             secrets_str (str): The secrets string

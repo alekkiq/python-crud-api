@@ -1,5 +1,5 @@
 WAITRESS_STATUS_CODES = {
-    'software_error': 0,
+    'software_error': 500,          # Internal Server Error
     # ...
 }
 

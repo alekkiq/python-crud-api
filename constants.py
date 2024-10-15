@@ -47,10 +47,11 @@ def initialize_api_constants(config: dict):
 # API Route constants            #
 # ------------------------------ #
 API_CORE_URL_PREFIX     = '/api/v1'
+# TODO - Add support for other relevant methods (PATCH, HEAD, OPTIONS)
 API_REQUEST_METHODS     = ('GET', 'POST', 'PUT', 'DELETE')
 VALID_QUERY_ARGS        = {
-                            'GET':      ('where', 'order_by', 'sort', 'limit', 'offset'),
-                            'POST':     ('data',),
-                            'PUT':      ('data', 'where'),
-                            'DELETE':   ('where',)
-                        }
+    'GET':      ('where', 'order_by', 'sort', 'limit', 'offset'),
+    'POST':     ('data',),
+    'PUT':      ('data', 'where'),
+    'DELETE':   ('where',)
+}
