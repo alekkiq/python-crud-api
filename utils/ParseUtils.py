@@ -3,6 +3,8 @@
 # ----------------------------------------------------------------
 
 class ParseUtils:
+    
+    # API request methods
     @staticmethod
     def parse_secrets(secrets_str: str, logger = None) -> dict:
         '''

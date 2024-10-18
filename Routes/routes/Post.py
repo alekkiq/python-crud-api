@@ -10,7 +10,7 @@ from Logger import Logger
 from Database import DatabaseManager
 
 # Constants
-from constants import VALID_QUERY_ARGS, HIDDEN_TABLES
+from constants import API_VALID_QUERY_ARGS, API_PROTECTED_TABLES
 
 class Post(Route):
     '''
@@ -34,19 +34,20 @@ class Post(Route):
             query_args (dict): The query arguments
             data (dict): The data to be inserted
         '''
-        if self._block_hidden_table(table):
-            return self._block_hidden_table(table)
+        if self._before_db_action(table, query_args):
+            return self._before_db_action(table, query_args)
+        
+        query_args = self._parse_query_args(request, API_VALID_QUERY_ARGS['POST'], table)
         
         # Parse and validate the data
-        parsed_data = self._parse_data(data, table)
-        if not parsed_data['success']:
-            return jsonify(parsed_data)
+        parsed_data = self._parse_data(data, table, method = 'POST')
         
-        query_args = self._parse_query_args(request, VALID_QUERY_ARGS['POST'], table)
+        if not parsed_data.get('success'):
+            return jsonify(parsed_data)
         
         result = self.db_manager.insert(
             table_name = table,
-            data = parsed_data['data'],
+            data = parsed_data.get('data'),
             query_args = query_args
         )
 
@@ -59,9 +60,6 @@ class Post(Route):
         Args:
             table (str): The table name
         '''
-        if not request.get_json():
-            return jsonify({'error': 'No data provided.', 'status': 400}), 400
-        
         return self._insert(
             table = table, 
             query_args = request.args,

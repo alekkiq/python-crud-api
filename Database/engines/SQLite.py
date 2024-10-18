@@ -32,7 +32,7 @@ class SQLiteDatabase(Database):
         '''
         try:
             if not self.config['database'].endswith('.db'):
-                self.config.get('database') = self.config['database'] + '.db'
+                self.config['database'] = self.config['database'] + '.db'
             
             connection = sqlite3.connect(
                 database            = self.config['database'],

@@ -10,10 +10,10 @@ from . import Database
 from Logger import Logger
 
 # Status messages
-from STATUS import DATABASE_STATUS_MESSAGES as STATUS_MESSAGES
+from status import DATABASE_STATUS_MESSAGES as STATUS_MESSAGES
 
 # Constants
-from constants import VALID_QUERY_ARGS
+from constants import API_VALID_QUERY_ARGS
 
 class DatabaseManager:
     '''
@@ -26,18 +26,21 @@ class DatabaseManager:
     def __init__(self, database: Database, logger: Logger):
         self.__logger = logger
         self.__db = database
+        
+        # Caches for common metadata
         self.__primary_key_cache = {}
         self.__table_columns_cache = {}
+        self.__table_names_cache = []
         
         # Database type
-        self.db_type = database.config.get('type')
+        self.db_type = self.__db.db_type
     
     # ------------------------------
     # Public methods
     # ------------------------------
-    def primary_key(self, table: str, db_type: str) -> str:
+    def primary_key(self, table: str) -> str:
         '''
-        Get the primary key for `table` from the `db_type` database.
+        Get the primary key for `table` from the active database.
         
         Args:
             table (str): The table name
@@ -51,10 +54,8 @@ class DatabaseManager:
             return self.__primary_key_cache[table]
         
         try:
-            if db_type == 'sqlite':
-                primary_key = MetadataRetriever.get_primary_key_sqlite(self.__db, table)
-            else:
-                primary_key = MetadataRetriever.get_primary_key_information_schema(self.__db, table)
+            primary_key = MetadataRetriever.get_primary_key(self.__db, table)
+            
             if primary_key:
                 self.__primary_key_cache[table] = primary_key
                 return primary_key
@@ -64,7 +65,7 @@ class DatabaseManager:
             self.__logger.error(f'Error getting primary key for table {table}: {e}')
             return None
         
-    def get_table_names(self, db_type: str) -> list:
+    def get_table_names(self) -> list:
         '''
         Get the list of table names from the `db_type` database.
         
@@ -74,17 +75,21 @@ class DatabaseManager:
         Returns:
             list: The list of table names
         '''
+        # Check if the table names are in cache
+        if self.__table_names_cache:
+            return self.__table_names_cache
+        
         try:
-            if db_type == 'sqlite':
-                tables = MetadataRetriever.get_table_names_sqlite(self.__db)
-            else:
-                tables = MetadataRetriever.get_table_names_information_schema(self.__db)
-            return tables
+            db_tables = MetadataRetriever.get_table_names(self.__db)
+            
+            if db_tables:
+                self.__table_names_cache.extend(db_tables)
+                return db_tables
         except Exception as e:
             self.__logger.error(STATUS_MESSAGES['query_fail']('Error getting table names', str(e))['message'])
             return []
         
-    def get_column_names(self, table: str, db_type: str, required_fields: bool = False, unique_fields: bool = False) -> list:
+    def get_column_names(self, table: str, required_fields: bool = False, unique_fields: bool = False) -> list:
         '''
         Gets valid columns for `table` from the `db_type` database.
         
@@ -109,10 +114,7 @@ class DatabaseManager:
             return self.__table_columns_cache[cache_key]
         
         try:
-            if db_type == 'sqlite':
-                columns = MetadataRetriever.get_column_names_sqlite(self.__db, table, required_fields, unique_fields)
-            else:  # mysql, postgresql, mariadb
-                columns = MetadataRetriever.get_column_names_information_schema(self.__db, table, required_fields, unique_fields)
+            columns = MetadataRetriever.get_column_names(self.__db, table, required_fields, unique_fields)
             
             if columns:
                 self.__table_columns_cache[cache_key] = columns
@@ -139,8 +141,11 @@ class DatabaseManager:
             dict: The status message
         '''
         status_message = STATUS_MESSAGES[status_type](*args, **kwargs)
-        if status_type.endswith('_fail'):
+        if status_message['type'] == 'error':
             self.__logger.error(status_message['message'])
+            success = False
+        elif status_message['type'] == 'warning':
+            self.__logger.warning(status_message['message'])
             success = False
         else:
             self.__logger.info(status_message['message'])
@@ -155,7 +160,7 @@ class DatabaseManager:
     # ------------------------------
     # Database actions (public)
     # ------------------------------
-    def select(self, table_name: str, fields: list = ['*'], query_args: dict = None) -> dict:
+    def select(self, table_name: str, fields: list = ['*'], query_args: dict = None, with_fetch: bool = True) -> dict:
         '''
         Database action: SELECT
         
@@ -172,6 +177,9 @@ class DatabaseManager:
         Returns:
             dict: The result of the SELECT query
         '''
+        if table_name not in self.get_table_names():
+            return self._create_status_result('table_not_found', table_name)
+        
         # Hard coded defaults
         # -> helps handling larger database table selects
         # -> to select ALL records, use limit=-1
@@ -193,20 +201,19 @@ class DatabaseManager:
         
         # Get the sql string of the constructed query
         sql = query.get_sql()
-        
         try:
             result = self.__db.query(
                 query = sql, 
                 table_name = table_name,
                 cursor_settings = {'dictionary': True},
-                query_arguments = query_args
+                query_arguments = query_args,
+                with_body = with_fetch
             )
             
-            if result['result_group'] and len(result['data']) > 0:
-                # Return the result as is for select actions
-                return result
-            else:
-                return self._create_status_result('query_fail', f'No records found in `{table_name}`', sql)
+            if with_fetch and not result.get('result_group') and len(result.get('data')) == 0:
+                return self._create_status_result('query_not_found', sql)
+            
+            return result
         except Exception as e:
             return self._create_status_result('query_fail', str(e), sql)
     
@@ -242,11 +249,11 @@ class DatabaseManager:
             affected_rows = result.get('affected_rows', 0)
             
             if affected_rows > 0:
-                return self._create_status_result('insert_success', result, table_name, affected_rows=affected_rows)
+                return self._create_status_result('insert_success', table_name)
             else:
-                return self._create_status_result('insert_fail', query_args, table_name, f'Record with `{query_args["where"]}` not found', affected_rows=affected_rows)
+                return self._create_status_result('insert_fail', data, table_name, f'Failed to insert record into `{table_name}`')
         except Exception as e:
-            return self._create_status_result('insert_fail', table_name, str(e), affected_rows=affected_rows)
+            return self._create_status_result('insert_fail', data, table_name, str(e))
         
     def update(self, table_name: str, data: dict, query_args: dict) -> dict:
         '''
@@ -264,7 +271,7 @@ class DatabaseManager:
             return {'success': False, 'error': STATUS_MESSAGES['update_fail'](table_name, 'No WHERE clause provided.')}
         
         table = Table(table_name)
-        query = Query.from_(table).update() # UPDATE table
+        query = Query.update(table) # UPDATE table
         
         # Add the data to the query
         for key, value in data.items():
@@ -276,7 +283,7 @@ class DatabaseManager:
             
         # Get the SQL string of the constructed query
         sql = query.get_sql()
-        
+
         try:
             result = self.__db.query(
                 query = sql, 
@@ -287,11 +294,11 @@ class DatabaseManager:
             affected_rows = result.get('affected_rows', 0)
             
             if affected_rows > 0:
-                return self._create_status_result('update_success', query_args, table_name, affected_rows=affected_rows)
+                return self._create_status_result('update_success', query_args.get('where'), table_name)
             else:
-                return self._create_status_result('update_fail', query_args, table_name, f'Record with `{query_args["where"]}` not found', affected_rows=affected_rows)
+                return self._create_status_result('update_fail', query_args.get('where'), table_name, f'Record with `{query_args["where"]}` not found')
         except Exception as e:
-            return self._create_status_result('update_fail', table_name, str(e), affected_rows=affected_rows)
+            return self._create_status_result('update_fail', query_args.get('where'), table_name, str(e))
         
     def delete(self, table_name: str, query_args: dict) -> dict:
         '''
@@ -325,8 +332,8 @@ class DatabaseManager:
             affected_rows = result.get('affected_rows', 0)
             
             if affected_rows > 0:
-                return self._create_status_result('delete_success', query_args['where'], table_name, affected_rows=affected_rows)
+                return self._create_status_result('delete_success', query_args['where'], table_name)
             else:
-                return self._create_status_result('delete_fail', query_args['where'], table_name, f'Record with `{query_args["where"]}` not found in `{table_name}`', affected_rows=affected_rows)
+                return self._create_status_result('delete_fail', query_args['where'], table_name, f'Record with `{query_args["where"]}` not found in `{table_name}`')
         except Exception as e:
-            return self._create_status_result('delete_fail', query_args['where'], table_name, str(e), affected_rows=affected_rows)
+            return self._create_status_result('delete_fail', query_args['where'], table_name, str(e))

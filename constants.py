@@ -36,22 +36,29 @@ def initialize_api_constants(config: dict):
     '''
     Initialize the constants from the config files.
     '''
-    global API_KEYS, API_SECRETS, HIDDEN_TABLES, ALLOWED_ORIGINS
+    global API_KEYS, API_SECRETS, API_PROTECTED_TABLES, API_ALLOWED_ORIGINS
     
     API_KEYS            = set(config.get('keys'))
     API_SECRETS         = config.get('secrets')
-    HIDDEN_TABLES       = config.get('hidden_tables')
-    ALLOWED_ORIGINS     = config.get('allowed_origins')
+    API_PROTECTED_TABLES= config.get('API_PROTECTED_TABLES')
+    API_ALLOWED_ORIGINS = config.get('API_ALLOWED_ORIGINS')
 
 # ------------------------------ #
 # API Route constants            #
 # ------------------------------ #
 API_CORE_URL_PREFIX     = '/api/v1'
-# TODO - Add support for other relevant methods (PATCH, HEAD, OPTIONS)
-API_REQUEST_METHODS     = ('GET', 'POST', 'PUT', 'DELETE')
-VALID_QUERY_ARGS        = {
+
+API_REQUEST_METHODS     = ('GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH')
+API_ACTION_METHODS      = ('POST', 'PUT', 'DELETE', 'PATCH')
+API_VALID_QUERY_ARGS    = {
     'GET':      ('where', 'order_by', 'sort', 'limit', 'offset'),
-    'POST':     ('data',),
-    'PUT':      ('data', 'where'),
-    'DELETE':   ('where',)
+    'POST':     tuple(),
+    'PUT':      ('where'),
+    'DELETE':   ('where',),
+    'HEAD':     ('where', 'order_by', 'sort', 'limit', 'offset'),
+    'PATCH':    ('where'),
 }
+API_VALID_CONTENT_TYPES = (
+    'application/json',
+    # TODO maybe in the future...
+)

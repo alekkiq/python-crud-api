@@ -21,21 +21,21 @@ DATABASE_CONFIG = {
     'host': os.getenv('DB_HOST'),
     'port': os.getenv('DB_PORT'),
     'database': os.getenv('DB_DATABASE'),
-    'autocommit': os.getenv('DB_AUTOCOMMIT', False),
     'charset': os.getenv('DB_CHARSET', 'utf8mb4'),
     'collation': os.getenv('DB_COLLATION', 'utf8mb4_unicode_ci')
 }
 
 # API config
-API_URL = os.getenv('API_URL')
+api_url = f'{os.getenv('API_URL')}:{os.getenv('API_PORT')}'
 API_CONFIG = {
-    'url': API_URL,
+    'host': os.getenv('API_HOST'),
+    'port': os.getenv('API_PORT'),
     'id': os.getenv('API_CLIENT_ID'),
     'secret': os.getenv('API_CLIENT_SECRET'),
     'keys': os.getenv('API_KEYS', '').split(','),
     'secrets': ParseUtils.parse_secrets(os.getenv('API_SECRETS', ''), API_LOGGER),
-    'allowed_origins': os.getenv('API_ALLOWED_ORIGINS', [API_URL]).split(','),
-    'hidden_tables': os.getenv('API_HIDDEN_TABLES', []).split(',')
+    'API_ALLOWED_ORIGINS': os.getenv('API_API_ALLOWED_ORIGINS', [api_url]).split(','),
+    'API_PROTECTED_TABLES': os.getenv('API_API_PROTECTED_TABLES', []).split(',')
 }
 
 # Waitress config
