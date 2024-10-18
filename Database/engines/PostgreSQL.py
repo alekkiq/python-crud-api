@@ -1,3 +1,4 @@
+# Python deps & external libraries
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -6,7 +7,7 @@ from typing import override
 from Logger import Logger
 
 from .. import Database
-from STATUS import DATABASE_STATUS_MESSAGES
+from status import DATABASE_STATUS_MESSAGES
 
 class PostgreSQLDatabase(Database):
     '''
@@ -20,7 +21,7 @@ class PostgreSQLDatabase(Database):
             config (dict): The database connection options
             logger (Logger): The logger instance
         '''
-        super().__init__(config, logger)
+        super().__init__(config, logger, 'postgresql')
         
     @override
     def _create_connection(self) -> psycopg2.connect:
@@ -32,30 +33,25 @@ class PostgreSQLDatabase(Database):
         '''
         try:
             connection = psycopg2.connect(
-                host = self.config['host'],
-                port = self.config['port'],
-                user = self.config['user'],
-                password = self.config['password'],
-                database = self.config['database']
+                host        = self.config.get('host'),
+                port        = self.config.get('port'),
+                user        = self.config.get('user'),
+                password    = self.config.get('password'),
+                database    = self.config.get('database'),
             )
-            
-            # Set auto-commit
-            if self.config.get('autocommit', False):
-                connection.autocommit = True
              
             # Set charset   
             if 'charset' in self.config:
-                connection.set_client_encoding(self.config['charset'])
+                connection.set_client_encoding(self.config.get('charset'))
             
             self.logger.info(DATABASE_STATUS_MESSAGES['connection_success'](self.config, 'PostgreSQL')['message'])
-        except psycopg2.Error as e:
-            self.logger.error(DATABASE_STATUS_MESSAGES['connection_fail'](self.config, e)['message'])
-            connection = None
-        finally:
+        
             return connection
+        except psycopg2.Error as e:
+            raise RuntimeError(DATABASE_STATUS_MESSAGES['connection_fail'](self.config.get('database'), self.config, e)['message'])
         
     @override
-    def query(self, query: str, table_name: str = None, cursor_settings: dict = None, query_arguments: dict = None, is_meta_query: bool = False) -> dict:
+    def query(self, query: str, table_name: str = None, cursor_settings: dict = None, query_arguments: dict = None, is_meta_query: bool = False, with_body: bool = True) -> dict:
         '''
         Execute `query` on the MySQL database.
         
@@ -64,6 +60,7 @@ class PostgreSQLDatabase(Database):
             cursor_settings (dict): The cursor settings
             query_arguments (dict): The query arguments
             is_meta_query (bool): If the query is a meta query or not
+            with_body (bool): If the query result should include the body or not
             
         Returns:
             dict: The query result dictionary
@@ -81,23 +78,30 @@ class PostgreSQLDatabase(Database):
             cursor_factory = RealDictCursor if cursor_settings.get('dictionary', False) else None
             cursor = self.connection.cursor(cursor_factory = cursor_factory)
             cursor.execute(query)
-            result = cursor.fetchall()
+            
+            result = None
+            
+            if with_body:
+                result = cursor.fetchall()
             
             # Commit changes if necessary
             self._commit_changes(query)
-            
-            self.logger.info(DATABASE_STATUS_MESSAGES['query_success'](query)['message'])
         except psycopg2.OperationalError as e:
             self.connection.rollback()
             status = DATABASE_STATUS_MESSAGES['query_fail'](e, query)
             self.logger.error(status['message'])
         finally:
             return self._build_get_query_result(
-                query = query,
+                query = {
+                    'type': query.strip().lower().split(' ')[0],
+                    'query': query
+                },
                 table_name = table_name,
                 query_arguments = query_arguments,
+                is_meta_query = is_meta_query,
                 status = status,
-                affected_rows = cursor.rowcount,
+                affected_rows = cursor.rowcount if cursor.rowcount != -1 else 0,
                 result_group = cursor.description is not None,
-                data = result
+                data = result,
+                with_body = with_body
             )

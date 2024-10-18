@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from Logger import Logger
 
 # Status messages
-from STATUS import DATABASE_STATUS_MESSAGES as STATUS_MESSAGES
+from status import DATABASE_STATUS_MESSAGES as STATUS_MESSAGES
 
 # Constants
 from constants import API_CORE_URL_PREFIX
@@ -19,10 +19,11 @@ class Database(ABC):
         config (dict): The database connection options
         logger (Logger): The logger instance
     '''
-    def __init__(self, config: dict, logger: Logger):
+    def __init__(self, config: dict, logger: Logger, db_type: str):
         self.logger = logger
         self.config = config
         self.connection = self._create_connection()
+        self.db_type = db_type if db_type else self.__class__.__name__.replace('Database', '').lower()
         
         # Define valid SQL actions
         self.valid_sql_actions = ('select', 'insert', 'update', 'delete')
@@ -36,7 +37,7 @@ class Database(ABC):
         pass
         
     @abstractmethod
-    def query(self, query: str, table_name: str = None, cursor_settings: dict = None, query_arguments: dict = None, is_meta_query: bool = False) -> dict:
+    def query(self, query: str, table_name: str = None, cursor_settings: dict = None, query_arguments: dict = None, is_meta_query: bool = False, with_body: bool = True) -> dict:
         '''
         The core method to execute a query on the database.
         
@@ -46,6 +47,7 @@ class Database(ABC):
             cursor_settings (dict): The cursor settings
             query_arguments (dict): The query arguments
             is_meta_query (bool): If the query is a meta query or not
+            with_body (bool): If the query result should include the body or not
         '''
         pass
     
@@ -68,7 +70,7 @@ class Database(ABC):
         except Exception as e:
             self.logger.error(f'Failed to commit changes to the database: {query}. Error: {str(e)}')
     
-    def _build_get_query_result(self, query: str, table_name: str, query_arguments: dict, is_meta_query: bool = False, status: dict = {'success': True, 'type': 'info'}, affected_rows: int = 0, result_group: bool = False, data: list = []) -> dict:
+    def _build_get_query_result(self, query: str, table_name: str, query_arguments: dict, is_meta_query: bool = False, status: dict = {'success': True, 'type': 'info'}, affected_rows: int = 0, result_group: bool = False, data: list = [], with_body: bool = True) -> dict:
         '''
         Constructs the query result dictionary.
         
@@ -131,17 +133,21 @@ class Database(ABC):
 
         # construct the final dictionary
         return {
+            'success': status.get('success'),
             'status': {
-                'success': status.get('success', True),
-                'type': status.get('type', 'info')
+                'success': status.get('success'),
+                'type': status.get('type')
             },
             'affected_rows': affected_rows,
             'result_group': result_group,
             'query': {
-                'statement': query,
+                'sql': {
+                    'statement': query.get('query'),
+                    'type': query.get('type')
+                },
                 'arguments': query_arguments
             },
-            'data': data,
+            'data': data if with_body else 'Request method does not include a body in the response.',
             'meta': {
                 'total_records': total_records,
                 'page': page,
@@ -153,5 +159,7 @@ class Database(ABC):
                 'next': next_url,
                 'prev': prev_url
             },
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': {
+                'utc': datetime.now(timezone.utc).isoformat(),
+            }
         }
