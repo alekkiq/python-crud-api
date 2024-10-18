@@ -10,7 +10,7 @@ from Logger import Logger
 from Database import DatabaseManager
 
 # Constants
-from constants import VALID_QUERY_ARGS, HIDDEN_TABLES
+from constants import API_VALID_QUERY_ARGS, API_PROTECTED_TABLES
 
 class Get(Route):
     '''
@@ -52,7 +52,7 @@ class Get(Route):
         '''
         query_args['limit'] = None   
     
-    def _get(self, table: str, query_args: dict, pk: str = None):
+    def _get(self, table: str, query_args: dict, pk: str = None, with_body: bool = True):
         '''
         Common logic for handling GET requests.
         
@@ -61,13 +61,13 @@ class Get(Route):
             query_args (dict): The query arguments
             pk (str, optional): The primary key value. Defaults to None.
         '''
-        if self._block_hidden_table(table):
-            return self._block_hidden_table(table)
+        if self._before_db_action(table, query_args):
+            return self._before_db_action(table, query_args)
         
-        query_args = self._parse_query_args(request, VALID_QUERY_ARGS['GET'], table)
+        query_args = self._parse_query_args(request, API_VALID_QUERY_ARGS['GET'], table)
         
         if pk is not None:
-            primary_key = self.db_manager.primary_key(table, self.db_manager.db_type)
+            primary_key = self.db_manager.primary_key(table)
             if primary_key is None:
                 return jsonify({'error': 'Primary key not found'}), 400
             query_args['where'] = f'{primary_key} = {pk}'
@@ -89,33 +89,38 @@ class Get(Route):
         result = self.db_manager.select(
             table_name=table, 
             fields=['*'], 
-            query_args=query_args
+            query_args=query_args,
+            with_fetch = True
         )
         
         return jsonify(result)
     
-    def get_all(self, table: str):
+    def get_all(self, table: str, head: bool = True):
         '''
         Handles the GET requests for ALL database records in the API.
         
         Args:
             table (str): The table name
+            head (bool): Whether to include the body in the response
         '''
         return self._get(
             table = table, 
-            query_args = request.args
+            query_args = request.args,
+            with_body = head
         )
 
-    def get_one(self, table: str, pk: str):
+    def get_one(self, table: str, pk: str, head: bool = True):
         '''
         Handles the GET requests for database records in the API.
         
         Args:
             table (str): The table name
             pk (str): The primary key value (can be other than the traditional `id`)
+            head (bool): Whether to include the body in the response
         '''
         return self._get(
             table = table, 
             query_args = request.args, 
-            pk = pk
+            pk = pk,
+            with_body = head
         )
