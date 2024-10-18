@@ -9,8 +9,10 @@ from .. import Route
 from Logger import Logger
 from Database import DatabaseManager
 
+from status import API_STATUS_MESSAGES as STATUS_MESSAGES
+
 # Constants
-from constants import VALID_QUERY_ARGS, HIDDEN_TABLES
+from constants import API_VALID_QUERY_ARGS, API_PROTECTED_TABLES
 
 class Put(Route):
     '''
@@ -25,7 +27,7 @@ class Put(Route):
     def __init__(self, db_manager: DatabaseManager, path: str, db_logger: Logger, api_logger: Logger):
         super().__init__(db_manager, db_logger, api_logger, path, 'PUT')
         
-    def _update(self, table: str, query_args: dict, data: dict):
+    def _update(self, table: str, query_args: dict, data: dict, pk: str = None):
         '''
         Common logic for handling PUT requests.
         
@@ -34,15 +36,13 @@ class Put(Route):
             query_args (dict): The query arguments
             data (dict): The data to be updated
         '''
-        if self._block_hidden_table(table):
-            return self._block_hidden_table(table)
+        if self._before_db_action(table, query_args):
+            return self._before_db_action(table, query_args)
         
         # Parse and validate the data
-        parsed_data = self._parse_data(data, table)
+        parsed_data = self._parse_data(data, table, method = 'PUT', primary_key_value = pk)
         if not parsed_data['success']:
             return jsonify(parsed_data)
-        
-        query_args = self._parse_query_args(request, VALID_QUERY_ARGS['PUT'], table)
         
         result = self.db_manager.update(
             table_name = table,
@@ -52,18 +52,20 @@ class Put(Route):
         
         return jsonify(result)
         
-    def update_one(self, table: str):
+    def update_one(self, table: str, pk: str):
         '''
         Handles the PUT requests for updating data in the database.
         
         Args:
             table (str): The table name
+            pk (str): The primary key value
         '''
-        if not request.get_json():
-            return jsonify({'error': 'No data provided.', 'status': 400}), 400
-        
         return self._update(
             table = table, 
-            query_args = request.args, 
-            data = request.get_json()
+            query_args = {
+                # Only update the record with the primary key for safety
+                'where': f'{self.db_manager.primary_key(table)} = {pk}'
+            }, 
+            data = request.get_json(),
+            pk = pk
         )

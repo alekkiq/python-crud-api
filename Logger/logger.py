@@ -23,5 +23,5 @@ class Logger:
 
     def get_logger(self):
         logger = logging.getLogger(self.logger_name)
-        logger.info(f'{self.logger_name} initialized.')
+        logger.info(f'{self.logger_name.upper()} successfully initialized.')
         return logger

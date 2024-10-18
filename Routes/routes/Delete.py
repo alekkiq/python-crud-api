@@ -10,7 +10,7 @@ from Logger import Logger
 from Database import DatabaseManager
 
 # Constants
-from constants import VALID_QUERY_ARGS, HIDDEN_TABLES
+from constants import API_VALID_QUERY_ARGS, API_PROTECTED_TABLES
 
 class Delete(Route):
     '''
@@ -33,8 +33,8 @@ class Delete(Route):
             table (str): The table name
             pk (str): The primary key value
         '''
-        if self._block_hidden_table(table):
-            return self._block_hidden_table(table)
+        if self._before_db_action(table, query_args):
+            return self._before_db_action(table, query_args)
 
         result = self.db_manager.delete(
             table_name = table, 
@@ -55,6 +55,6 @@ class Delete(Route):
             table = table, 
             query_args = {
                 # Only delete the record with the primary key for safety
-                'where': f'{self.db_manager.primary_key(table, self.db_manager.db_type)} = {pk}'
+                'where': f'{self.db_manager.primary_key(table)} = {pk}'
             }
         )
