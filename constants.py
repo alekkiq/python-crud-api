@@ -50,6 +50,7 @@ API_CORE_URL_PREFIX     = '/api/v1'
 
 API_REQUEST_METHODS     = ('GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH')
 API_ACTION_METHODS      = ('POST', 'PUT', 'DELETE', 'PATCH')
+API_DATA_METHODS        = ('POST', 'PUT', 'PATCH')
 API_VALID_QUERY_ARGS    = {
     'GET':      ('where', 'order_by', 'sort', 'limit', 'offset'),
     'POST':     tuple(),
