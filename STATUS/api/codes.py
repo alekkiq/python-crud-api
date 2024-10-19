@@ -35,7 +35,7 @@ API_STATUS_MESSAGES = {
         'type': 'error'
     },
     'invalid_method': lambda method, valid_methods, error = None: {
-        'message': f'HTTP method `{method}` is not supported. Valid methods are {", ".join(valid_methods)}',
+        'message': f'HTTP method `{method}` is not supported, or the request url is of invalid format. Valid methods are {", ".join(valid_methods)}',
         'code': API_STATUS_CODES['invalid_method'],
         'error': error,
         'type': 'error'

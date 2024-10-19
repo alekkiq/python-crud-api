@@ -51,6 +51,12 @@ class Delete(Route):
             table (str): The table name
             pk (str): The primary key value
         '''
+        if not self.db_manager.primary_key(table) or not pk:
+            return jsonify({
+                'success': False,
+                'message': 'Primary key not found for the table'
+            })
+            
         return self._delete(
             table = table, 
             query_args = {
