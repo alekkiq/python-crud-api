@@ -14,7 +14,7 @@ from flask_cors import CORS
 
 # Configurations
 from config import DATABASE_CONFIG, API_CONFIG, APP_CONFIG, WAITRESS_CONFIG
-from constants import APP_ENVS, API_CORE_URL_PREFIX, API_REQUEST_METHODS, API_ACTION_METHODS, API_VALID_CONTENT_TYPES, initialize_api_constants
+from constants import APP_ENVS, API_CORE_URL_PREFIX, API_REQUEST_METHODS, API_ACTION_METHODS, API_DATA_METHODS, API_VALID_CONTENT_TYPES, initialize_api_constants
 
 # Initialize API constants
 initialize_api_constants(API_CONFIG)
@@ -93,16 +93,16 @@ def check_allowed_method():
 
 @app.before_request
 def check_content_type():
-    if not request.content_type and request.method in API_ACTION_METHODS:
+    if not request.content_type and request.method in API_DATA_METHODS:
         data_types = [ct.split('/')[-1].upper() for ct in API_VALID_CONTENT_TYPES]
         return json_result(False, API_STATUS_MESSAGES['no_content_type'](data_types))
     
-    if request.method in API_ACTION_METHODS and str(request.content_type.split(';')[0]).lower() not in API_VALID_CONTENT_TYPES:
+    if request.method in API_DATA_METHODS and str(request.content_type.split(';')[0]).lower() not in API_VALID_CONTENT_TYPES:
         return json_result(False, API_STATUS_MESSAGES['invalid_content_type'](str(request.content_type), API_VALID_CONTENT_TYPES))
         
 @app.before_request
 def check_data_exists():
-    if request.method in API_ACTION_METHODS and not request.json:
+    if request.method in API_DATA_METHODS and not request.json:
         APP_LOGGER.warning(f'No data provided for request: {request.url}')
         return json_result(False, API_STATUS_MESSAGES['no_data_provided'](API_VALID_CONTENT_TYPES))
         
