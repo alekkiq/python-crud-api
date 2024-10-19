@@ -136,16 +136,19 @@ API_API_ALLOWED_ORIGINS="origin_1,origin_2"
 ```
 
 ## Logging
-The application includes entry-level logging for debugging and error tracking. Logs are output directly to the console, as well as in the `logs/` folder as separate `.log` files.
 
-### App `logs/app/app.log`
-The general app-level logs, for example, the whole app startup gets logged here.
+The application includes basic logging for debugging and error tracking. Logs are output to the console and saved in the `logs/` directory as separate `.log` files.
 
-### Database `logs/db/db.log`
-All database actions have basic level of logging. For example, each query executed in the database gets logged.
+### Log Files
 
-### API `logs/api/api.log`
-The most general API actions haev basic logging as well. For example, the whole (but simplified) API call gets logged, logging stuff like the call's headers, query arguments, http method and other relevant values.
+- **App Logs**: `logs/app/app.log`
+  - Contains general application-level logs, including startup events and other significant actions.
+
+- **Database Logs**: `logs/db/db.log`
+  - Logs all database exceptions.
+
+- **API Logs**: `logs/api/api.log`
+  - Captures general API actions, including request headers, query parameters, HTTP methods, and other relevant details.
 
 ### Waitress (production only) `logs/waitress/waitress.log`
 
@@ -162,6 +165,8 @@ For a more in-depth API documentation, please refer to the [API.md](API.md) file
 ### Musts
 - Write ***tests*** 🙄
 - Write API documentation
+- Add a status code to all `jsonify` returns
+- Support for limiting api requests via .env variables "LIMITER_..."
 
 ### In case of borderline boredom
 - Add support for other data types than json
