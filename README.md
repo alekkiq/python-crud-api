@@ -72,6 +72,11 @@ API_SECRETS="valid:secret,api:secret,keys:secret"
 API_API_PROTECTED_TABLES="your,protected,tables"
 API_API_ALLOWED_ORIGINS="your,allowed,origins"
 
+# API call limits
+API_LIMITS_PER_DAY="10000"
+API_LIMITS_PER_HOUR="1000"
+API_LIMITS_PER_MINUTE="60"
+
 # Database settings
 # Adjust these values to match your database type's settings
 DB_CONNECTION="db_type"     # mysql | postgresql | sqlite
