@@ -65,6 +65,7 @@ APP_DEBUG="true"
 
 # API settings
 API_URL="api_url"
+API_PORT="your_port"
 API_CLIENT_ID="client_id"
 API_CLIENT_SECRET="client_secret"
 API_KEYS="valid,api,keys"
