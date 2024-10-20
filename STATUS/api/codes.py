@@ -2,6 +2,7 @@ API_STATUS_CODES = {
     'software_error': 500,          # Internal Server Error
     'bad_request': 400,             # Bad Request
     'not_found': 404,               # Not Found
+    'too_many_requests': 429,       # Too Many Requests
     'origin_not_allowed': 405,      # Method/route Not Allowed
     'invalid_content_type': 400,    # Bad Request
     'invalid_method': 405,          # Method Not Allowed
@@ -26,6 +27,12 @@ API_STATUS_MESSAGES = {
     'bad_request': lambda error: {
         'message': 'Bad request. Check the request and try again.',
         'code': API_STATUS_CODES['bad_request'],
+        'error': error,
+        'type': 'error'
+    },
+    'too_many_requests': lambda error, allowed_rate: {
+        'message': f'Too many requests. Please try again later. The allowed rate is {allowed_rate} requests per minute.',
+        'code': API_STATUS_CODES['too_many_requests'],
         'error': error,
         'type': 'error'
     },
