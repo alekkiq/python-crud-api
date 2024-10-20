@@ -40,8 +40,8 @@ def initialize_api_constants(config: dict):
     
     API_KEYS            = set(config.get('keys'))
     API_SECRETS         = config.get('secrets')
-    API_PROTECTED_TABLES= config.get('API_PROTECTED_TABLES')
-    API_ALLOWED_ORIGINS = config.get('API_ALLOWED_ORIGINS')
+    API_PROTECTED_TABLES= config.get('protected_tables')
+    API_ALLOWED_ORIGINS = config.get('allowed_origins')
 
 # ------------------------------ #
 # API Route constants            #

@@ -7,6 +7,8 @@
 # Python dependencies & external libraries
 from flask import Flask, request, jsonify, g, abort
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # ------------------------------------- #
 # Constants & configurations            #
@@ -49,6 +51,17 @@ CORS(
             }
         }, 
     supports_credentials = True
+)
+
+# Initialize API limiter
+limiter = Limiter(
+    app = app,
+    key_func = get_remote_address,
+    default_limits = [
+        f'{API_CONFIG["limits"]["per_minute"]}/minute',
+        f'{API_CONFIG["limits"]["per_hour"]}/hour',
+        f'{API_CONFIG["limits"]["per_day"]}/day'
+    ]
 )
 
 # ------------------------------------- #
@@ -132,6 +145,10 @@ def not_found(error):
 @app.errorhandler(405)
 def method_not_allowed(error):
     return json_result(False, API_STATUS_MESSAGES['invalid_method'](request.method, API_REQUEST_METHODS, str(error)))
+
+@app.errorhandler(429)
+def too_many_requests(error):
+    return json_result(False, API_STATUS_MESSAGES['too_many_requests'](str(error), f'{API_CONFIG["limits"]["per_minute"]}/minute'))
 
 @app.errorhandler(500)
 def internal_error(error):
