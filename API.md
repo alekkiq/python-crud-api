@@ -11,6 +11,18 @@ With data-involving methods (POST, PATCH, PUT) you also have to include:
 - `Content-type: application/json`: Content type JSON
 - `{"name": "John Doe", "email": "johndoe@email.com"}`: JSON format data
 
+## Request limits
+By default, the API has call limits set like following in `.env`:
+
+```properties
+# API call limits
+API_LIMITS_PER_DAY="10000"
+API_LIMITS_PER_HOUR="1000"
+API_LIMITS_PER_MINUTE="60"
+```
+
+These limits affect all request types. You may modify the values how you wish, but it is highly recommended to keep some limit to avoid unexpected runtime errors with too many requests.
+
 ## Query parameters
 
 ### Common usage
