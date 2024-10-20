@@ -1,13 +1,12 @@
 # Python CRUD API
 
 ## Description
-A Python-based CRUD (Create, Read, Update, Delete) API built with Flask and PyPika. This API provides endpoints to interact with an SQL database, supporting various operations on different tables. The project includes features like API key authentication, CORS support, and environment-based configuration.
+A Python-based CRUD (Create, Read, Update, Delete) API built with Flask and PyPika. This API provides endpoints to interact with an SQL database, supporting various operations on different tables. The project includes features like support for multiple SQL DBMS's, CORS support and environment-based configuration.
 
 ## Features
 - Support for the most common SQL DBMS's: MySQL (uses the MariaDB-intended connector), PostgreSQL and SQLite
 - CRUD operations for database tables
 - API actions via the core four HTTP methods (GET, POST, PUT, DELETE)
-- API key and secret authentication
 - CORS support with configurable allowed origins
 - Protecting (hiding) certain tables from the API from non-allowed origins
 - Fast and easy environment-based configuration using a `.env` file.
@@ -95,7 +94,7 @@ WAITRESS_THREADS="thread_count"
 
 2. Make sure your `.env` configurations are correct
     - **Development / Local instances**:
-        - Set your `APP_ENV` environment value to `development` or `local`:
+        - Set your `APP_ENV` environment value to `development`:
             ```properties
             APP_ENV="development"
             ```
@@ -129,7 +128,7 @@ Requests to the API must include the following headers:
 - `X-API-SECRET`: A valid secret for the corresponding API key
 
 ## CORS Configuration
-CORS is configured to allow requests from specified origins. Update the `API_API_ALLOWED_ORIGINS` variable in the `.env` file to include the allowed origins, like so:
+CORS is configured to allow requests from specified origins. By default, this only affects the action requests, keeping the GET requests public to all origins. Update the `API_API_ALLOWED_ORIGINS` variable in the `.env` file to allow origins to make POST & PUT requests to the API.
 
 ```properties
 API_API_ALLOWED_ORIGINS="origin_1,origin_2"
