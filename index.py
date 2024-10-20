@@ -79,17 +79,40 @@ def json_result(success: bool, status_message: dict):
 # ------------------------------------- #
 # Middleware (before_request)           #
 # ------------------------------------- #
+
+# 1. Check the API key and secret
 @app.before_request
 def check_api_key():
-    '''
-    Checks the request headers for the API key and secret.
-    '''
     api_key = request.headers.get('X-API-KEY')
     api_secret = request.headers.get('X-API-SECRET')
     
     if api_key not in API_KEYS or API_SECRETS.get(api_key) != api_secret:
         return json_result(False, API_STATUS_MESSAGES['unauthorized'])
 
+# 2. Check the request method is allowed
+@app.before_request
+def check_allowed_method():
+    if request.method not in API_REQUEST_METHODS:
+        return json_result(False, API_STATUS_MESSAGES['invalid_method'](request.method, API_REQUEST_METHODS, f'Request method {request.method} is not allowed.'))
+
+# 3. Check the content type
+@app.before_request
+def check_content_type():
+    if not request.content_type and request.method in API_DATA_METHODS:
+        data_types = [ct.split('/')[-1].upper() for ct in API_VALID_CONTENT_TYPES]
+        return json_result(False, API_STATUS_MESSAGES['no_content_type'](data_types))
+    
+    if request.method in API_DATA_METHODS and str(request.content_type.split(';')[0]).lower() not in API_VALID_CONTENT_TYPES:
+        return json_result(False, API_STATUS_MESSAGES['invalid_content_type'](str(request.content_type), API_VALID_CONTENT_TYPES))
+
+# 4. Check if there is any data in the request
+@app.before_request
+def check_data_exists():
+    if request.method in API_DATA_METHODS and not request.json:
+        APP_LOGGER.warning(f'No data provided for request: {request.url}')
+        return json_result(False, API_STATUS_MESSAGES['no_data_provided'](API_VALID_CONTENT_TYPES))
+
+# 5. Check, and set the table visibility based on the origin
 @app.before_request
 def check_allowed_origin():
     try:
@@ -100,27 +123,8 @@ def check_allowed_origin():
     except Exception as e:
         API_LOGGER.warning(f'Error checking hidden table permission: {e}')
         g.table_visibility = 'hidden'
-        
-@app.before_request
-def check_allowed_method():
-    if request.method not in API_REQUEST_METHODS:
-        return json_result(False, API_STATUS_MESSAGES['invalid_method'](request.method, API_REQUEST_METHODS, f'Request method {request.method} is not allowed.'))
 
-@app.before_request
-def check_content_type():
-    if not request.content_type and request.method in API_DATA_METHODS:
-        data_types = [ct.split('/')[-1].upper() for ct in API_VALID_CONTENT_TYPES]
-        return json_result(False, API_STATUS_MESSAGES['no_content_type'](data_types))
-    
-    if request.method in API_DATA_METHODS and str(request.content_type.split(';')[0]).lower() not in API_VALID_CONTENT_TYPES:
-        return json_result(False, API_STATUS_MESSAGES['invalid_content_type'](str(request.content_type), API_VALID_CONTENT_TYPES))
-        
-@app.before_request
-def check_data_exists():
-    if request.method in API_DATA_METHODS and not request.json:
-        APP_LOGGER.warning(f'No data provided for request: {request.url}')
-        return json_result(False, API_STATUS_MESSAGES['no_data_provided'](API_VALID_CONTENT_TYPES))
-        
+# 6. Restrict methods for disallowed origins
 @app.before_request
 def restrict_methods_for_disallowed_origins():
     try:
@@ -132,7 +136,7 @@ def restrict_methods_for_disallowed_origins():
             return json_result(False, API_STATUS_MESSAGES['origin_not_allowed'])
     except Exception as e:
         return json_result(False, API_STATUS_MESSAGES['software_error'](str(e)))
-    
+
 # ------------------------------------- #
 # Error handlers                        #
 # ------------------------------------- #
