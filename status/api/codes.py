@@ -4,6 +4,7 @@ API_STATUS_CODES = {
     'not_found': 404,               # Not Found
     'too_many_requests': 429,       # Too Many Requests
     'origin_not_allowed': 405,      # Method/route Not Allowed
+    'unauthorized': 403,            # Unauthorized
     'invalid_content_type': 400,    # Bad Request
     'invalid_method': 405,          # Method Not Allowed
     'invalid_query_arg': 400,       # Bad Request
@@ -28,6 +29,11 @@ API_STATUS_MESSAGES = {
         'message': 'Bad request. Check the request and try again.',
         'code': API_STATUS_CODES['bad_request'],
         'error': error,
+        'type': 'error'
+    },
+    'unauthorized': {
+        'message': 'Unauthorized. Please provide valid credentials.',
+        'code': API_STATUS_CODES['unauthorized'],
         'type': 'error'
     },
     'too_many_requests': lambda error, allowed_rate: {

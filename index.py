@@ -88,7 +88,7 @@ def check_api_key():
     api_secret = request.headers.get('X-API-SECRET')
     
     if api_key not in API_KEYS or API_SECRETS.get(api_key) != api_secret:
-        abort(403)  # Forbidden request
+        return json_result(False, API_STATUS_MESSAGES['unauthorized'])
 
 @app.before_request
 def check_allowed_origin():
