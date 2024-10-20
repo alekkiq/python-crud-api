@@ -59,7 +59,7 @@ The application uses environment variables for configuration. The `.env` file mu
 
 # App settings
 APP_NAME="APP_NAME"
-APP_ENV="development" # development | production
+APP_ENV="development"               # development | production
 APP_VERSION="1.0"
 APP_DEBUG="true"
 
@@ -71,6 +71,7 @@ API_KEYS="valid,api,keys"
 API_SECRETS="valid:secret,api:secret,keys:secret"
 API_API_PROTECTED_TABLES="your,protected,tables"
 API_API_ALLOWED_ORIGINS="your,allowed,origins"
+API_STORAGE_URI=""                  # Add a redis URI here if you're using redis in production
 
 # API call limits
 API_LIMITS_PER_DAY="10000"
@@ -79,14 +80,14 @@ API_LIMITS_PER_MINUTE="60"
 
 # Database settings
 # Adjust these values to match your database type's settings
-DB_CONNECTION="db_type"     # mysql | postgresql | sqlite
-DB_DATABASE="your_db_name"  # For SQLite, this should be the path to your database file ending with .db
+DB_CONNECTION="db_type"             # mysql | postgresql | sqlite
+DB_DATABASE="your_db_name"          # For SQLite, this should be the path to your database file ending with .db
 DB_HOST="your_db_host"
 DB_PORT="your_db_port"
 DB_USER="your_db_user"
 DB_PASSWORD="your_db_password"
-DB_COLLATION="utf8mb4_unicode_ci"
 DB_CHARSET="utf8"
+DB_COLLATION="utf8mb4_unicode_ci"   # Mainly for MySQL to support wider range of characters
 
 # Waitress settings (only if your ENV is production)
 WAITRESS_HOST="your_host"

@@ -9,6 +9,7 @@ from flask import Flask, request, jsonify, g, abort
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from redis import Redis
 
 # ------------------------------------- #
 # Constants & configurations            #
@@ -57,6 +58,7 @@ CORS(
 limiter = Limiter(
     app = app,
     key_func = get_remote_address,
+    storage_uri = API_CONFIG.get('storage_uri', 'memory://'),
     default_limits = [
         f'{API_CONFIG["limits"]["per_minute"]}/minute',
         f'{API_CONFIG["limits"]["per_hour"]}/hour',

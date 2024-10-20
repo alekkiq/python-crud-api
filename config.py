@@ -36,6 +36,7 @@ API_CONFIG = {
     'secrets': ParseUtils.parse_secrets(os.getenv('API_SECRETS', ''), API_LOGGER),
     'allowed_origins': os.getenv('API_ALLOWED_ORIGINS', '').split(','),
     'protected_tables': os.getenv('API_PROTECTED_TABLES', '').split(','),
+    'storage_uri': os.getenv('API_STORAGE_URI'),
     'limits': {
         'per_minute': os.getenv('API_LIMITS_PER_MINUTE'),
         'per_hour': os.getenv('API_LIMITS_PER_HOUR'),

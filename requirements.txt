@@ -2,7 +2,8 @@ mysql-connector-python
 psycopg2
 Flask
 flask-cors
-Flask-Limiter
+flask-limiter
+redis
 python-dotenv
 pypika
 waitress
