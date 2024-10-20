@@ -34,8 +34,13 @@ API_CONFIG = {
     'secret': os.getenv('API_CLIENT_SECRET'),
     'keys': os.getenv('API_KEYS', '').split(','),
     'secrets': ParseUtils.parse_secrets(os.getenv('API_SECRETS', ''), API_LOGGER),
-    'API_ALLOWED_ORIGINS': os.getenv('API_API_ALLOWED_ORIGINS', [api_url]).split(','),
-    'API_PROTECTED_TABLES': os.getenv('API_API_PROTECTED_TABLES', []).split(',')
+    'allowed_origins': os.getenv('API_ALLOWED_ORIGINS', '').split(','),
+    'protected_tables': os.getenv('API_PROTECTED_TABLES', '').split(','),
+    'limits': {
+        'per_minute': os.getenv('API_LIMITS_PER_MINUTE'),
+        'per_hour': os.getenv('API_LIMITS_PER_HOUR'),
+        'per_day': os.getenv('API_LIMITS_PER_DAY')
+    }
 }
 
 # Waitress config
